@@ -9,10 +9,4 @@
     <DebugSymbols>true</DebugSymbols>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy
-      SourceFiles="$(TargetPath)"
-      DestinationFolder="/mnt/Gry/__UNITY PROJECTS__/TestUltralight/Assets/Plugins/UltralightUnity/"
-      SkipUnchangedFiles="true" />
-  </Target>
 </Project>
