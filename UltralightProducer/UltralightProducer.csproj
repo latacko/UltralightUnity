@@ -7,7 +7,8 @@
     <EmbeddedResource Include="libs/libUltralight.so" />
     <EmbeddedResource Include="libs/libUltralightCore.so" />
     <EmbeddedResource Include="libs/libWebCore.so" />
-    <None Include="resources/**" CopyToOutputDirectory="Always" />
+    <None Include="resources/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Include="unitySample.unitypackage" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <PropertyGroup>

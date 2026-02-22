@@ -39,7 +39,7 @@ jobs:
       - name: Archive release
         run: |
           cd publish
-          tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer resources
+          tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer resources unitySample.unitypackage
           mv UltralightProducer-linux-x64.tar.gz ../
 
       - name: Create GitHub Release
