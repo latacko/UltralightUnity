@@ -1,6 +1,12 @@
 ## `UltralightUnity`
 
-Is bride to between unity and ultralight v1.4
+Is bride to between unity and `ultralight v1.4`
+
+Currently, it only works on `Linux`
+
+If you want to contribute to create a Windows version, you must:
+- include the required Ultralight Windows DLLs  
+- implement the MemoryMappedFile solution for Windows in UltralightManager at line 43  
 
 ## License
 
