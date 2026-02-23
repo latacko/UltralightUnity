@@ -1,183 +1,137 @@
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
+using System.Text;
 using UltralightUnity;
 
 public unsafe class UltralightManager : IDisposable
 {
-    const string PATH = "/dev/shm/browser_shared_texture";
-    const uint MAGIC = 0xBEEFBEEF;
+    public const string BASE_PATH = "/dev/shm/";
+    const string PATH = BASE_PATH + "ultralight_manager";
+    const uint MAGIC = 0x6C617461;
 
-    public const int WIDTH = 1920;
-    public const int HEIGHT = 1080;
-    const int BUFS = 3;
-
-    int bufferSize;
     MemoryMappedFile mmf;
     MemoryMappedViewAccessor accessor;
 
     Header* header;
     byte* basePtr;
-    int headerSize;
-    int mouseOffset;
-    int keyOffset;
-    int textOffset;
-    int frameOffset;
+
+    int requestViewOffset;
+    int destroyViewOffset;
+
+    readonly Dictionary<uint, UltralightViewManager> views = [];
 
     public void Init()
     {
-        bufferSize = WIDTH * HEIGHT * 4;
-        int mouseEventsSize = sizeof(MouseEvent) * 128;
-        int keyEventsSize = sizeof(KeyEvent) * 128;
-        int textEventsSize = sizeof(InputTextEvent) * 128;
+        int requestViewEventsSize = sizeof(RequestViewEvent) * ChunksData.REQUEST_VIEW_EVENT_CHUNKS;
+        int destroyViewEventsSize = sizeof(DestroyViewEvent) * ChunksData.DESTORY_VIEW_EVENT_CHUNKS;
 
         int total =
             Marshal.SizeOf<Header>() +
-            mouseEventsSize +
-            keyEventsSize +
-            textEventsSize +
-            bufferSize * BUFS;
+            requestViewEventsSize +
+            requestViewEventsSize;
 
         var fs = new FileStream(PATH, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
         fs.SetLength(total);
 
-        mmf = MemoryMappedFile.CreateFromFile(
-            fs,
-            null,
-            total,
-            MemoryMappedFileAccess.ReadWrite,
-            HandleInheritability.None,
-            false);
+        mmf = MemoryMappedFile.CreateFromFile(fs, null, total, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
 
         accessor = mmf.CreateViewAccessor();
 
         byte* ptr = (byte*)accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
         basePtr = ptr;
         header = (Header*)ptr;
-        headerSize = Marshal.SizeOf<Header>();
+        int headerSize = Marshal.SizeOf<Header>();
 
-        mouseOffset = headerSize;
-        keyOffset = mouseOffset + sizeof(MouseEvent) * 128;
-        textOffset = keyOffset + sizeof(KeyEvent) * 128;
-        frameOffset = textOffset + sizeof(InputTextEvent) * 128;
+        requestViewOffset = headerSize;
+        destroyViewOffset = requestViewOffset + requestViewEventsSize;
 
         header->magic = MAGIC;
 
-        header->mouseOffset = (uint)mouseOffset;
-        header->keyOffset = (uint)keyOffset;
-        header->textOffset = (uint)textOffset;
-        header->frameOffset = (uint)frameOffset;
 
-        header->width = WIDTH;
-        header->height = HEIGHT;
-        header->bufferSize = (uint)bufferSize;
-        header->writeIndex = 0;
+        /* OFFSETS */
+        header->requestViewOffset = (uint)requestViewOffset;
+        header->destroyViewOffset = (uint)destroyViewOffset;
+
+        header->RequestViewEventWrite = 0;
+        header->RequestViewEventRead = 0;
+
+        header->DestroyViewEventWrite = 0;
+        header->DestroyViewEventRead = 0;
+
+
         header->frameCounter = 0;
         header->requestCounter = 0;
-        header->resizeCounter = 0;
-
-
-        header->buttonEventRead = 0;
-        header->buttonEventWrite = 0;
-        header->inputTextEventWrite = 0;
-        header->inputTextEventRead = 0;
-        header->keyEventWrite = 0;
-        header->keyEventRead = 0;
-        header->buttonEventWrite = 0;
-        header->buttonEventRead = 0;
-
-        DebugLayout();
-
-        Console.WriteLine($"mouseOffset: {mouseOffset}");
-        Console.WriteLine($"keyOffset: {keyOffset}");
-        Console.WriteLine($"textOffset: {textOffset}");
-        Console.WriteLine($"frameOffset: {frameOffset}");
-
-        Console.WriteLine($"Magic: {header->magic:X}");
     }
 
-    public void DebugLayout()
-    {
-        Console.WriteLine($"Header size: {Marshal.SizeOf<Header>()}");
-        Console.WriteLine($"MouseEvent size: {sizeof(MouseEvent)}");
-        Console.WriteLine($"KeyEvent size: {sizeof(KeyEvent)}");
-        Console.WriteLine($"InputTextEvent size: {sizeof(InputTextEvent)}");
-    }
-
-    public void Update(ULBitmap bitmap)
+    public void BeforeUpdate()
     {
         while (header->requestCounter <= header->frameCounter)
         {
             Thread.Sleep(1);
         }
 
-        Header* h = (Header*)basePtr;
-        ReadMouseEvents(h);
+        ReadRequestViewEvents();
+        ReadDestroyViewEvents();
 
-        ReadKeyEvents(h);
+        foreach (var view in views)
+        {
+            view.Value.BeforeUpdate();
+        }
 
-        ReadTextEvent(h);
-
-        // choose next buffer
-        uint next = (header->writeIndex + 1) % BUFS;
-        byte* buffer = basePtr + frameOffset + (header->bufferSize * (int)next);
-        WriteBitmapToBuffer(bitmap, buffer);
-
-        // memory barrier
-        Thread.MemoryBarrier();
-
-        header->writeIndex = next;
         header->frameCounter++;
     }
 
-    public void ReadMouseEvents(Header* h)
+    public void Update()
     {
-        while (h->buttonEventRead < h->buttonEventWrite)
+        foreach (var view in views)
         {
-            int index = (int)(h->buttonEventRead % 128);
-            MouseEvent* ev = (MouseEvent*)(basePtr + mouseOffset + index * sizeof(MouseEvent));
-
-            MouseManager.ReadEvent(ev);
-
-            h->buttonEventRead++;
+            view.Value.Update();
         }
     }
 
-    public void ReadKeyEvents(Header* h)
+    void ReadRequestViewEvents()
     {
-        while (h->keyEventRead < h->keyEventWrite)
+        while (header->RequestViewEventRead < header->RequestViewEventWrite)
         {
-            int index = (int)(h->keyEventRead % 128);
-            KeyEvent* ev = (KeyEvent*)(basePtr + keyOffset + index * sizeof(KeyEvent));
+            int index = (int)(header->RequestViewEventRead % 128);
+            RequestViewEvent* ev = (RequestViewEvent*)(basePtr + requestViewOffset + index * sizeof(RequestViewEvent));
 
-            KeysManager.ReadEvent(ev);
+            Console.WriteLine("Got request for view");
+            ev->id = CreateView(ev);
 
-            h->keyEventRead++;
+            header->RequestViewEventRead++;
         }
     }
 
-    public void ReadTextEvent(Header* h)
+    uint CreateView(RequestViewEvent* ev)
     {
-        while (h->inputTextEventRead < h->inputTextEventWrite)
+        var _random = new Random();
+        uint _id;
+        do
         {
-            int index = (int)(h->inputTextEventRead % 128);
-            InputTextEvent* ev = (InputTextEvent*)(basePtr + textOffset + index * sizeof(InputTextEvent));
+            _id = (uint)_random.Next(1000000000, int.MaxValue);
+        } while (views.ContainsKey(_id));
 
-            KeysManager.InputText(ev);
-
-            h->inputTextEventRead++;
-        }
+        Console.WriteLine("Creating view it id: " + _id);
+        views[_id] = new UltralightViewManager(_id, ev->width, ev->height, ev->isTransparent == 1);
+        Console.WriteLine("Created view it id: " + _id);
+        return _id;
     }
 
-    void WriteBitmapToBuffer(ULBitmap bmp, byte* buffer)
+    void ReadDestroyViewEvents()
     {
-        var pixels = bmp.LockPixels();
-        try
+        while (header->DestroyViewEventRead < header->DestroyViewEventWrite)
         {
-            Buffer.MemoryCopy((void*)pixels, buffer, (long)bmp.Size, (long)bmp.Size);
-        }
-        finally
-        {
-            bmp.UnlockPixels();
+            int index = (int)(header->DestroyViewEventRead % 128);
+            DestroyViewEvent* ev = (DestroyViewEvent*)(basePtr + destroyViewOffset + index * sizeof(DestroyViewEvent));
+
+            Console.WriteLine("Destroying view");
+            views[ev->id].Dispose();
+            views.Remove(ev->id);
+            Console.WriteLine("Destroyed view");
+
+            header->DestroyViewEventRead++;
         }
     }
 
@@ -185,6 +139,11 @@ public unsafe class UltralightManager : IDisposable
     {
 
         Console.WriteLine("cleaning up...");
+
+        foreach (var view in views)
+        {
+            view.Value.Dispose();
+        }
 
         try
         {

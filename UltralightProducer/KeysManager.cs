@@ -4,21 +4,20 @@ using UltralightUnity.Enums;
 public static unsafe class KeysManager
 {
     public static ULKeyEventModifiers modifiers { get; private set; }
-    public static ULView view;
-    public static void ReadEvent(KeyEvent* ev)
+    public static void ReadEvent(KeyEvent* ev, ULView view)
     {
         switch (ev->type)
         {
             case 1:
-                KeyDown(ev);
+                KeyDown(ev, view);
                 break;
             case 2:
-                KeyUp(ev);
+                KeyUp(ev, view);
                 break;
         }
     }
 
-    static void KeyDown(KeyEvent* keyevent)
+    static void KeyDown(KeyEvent* keyevent, ULView view)
     {
 
         if (keyevent->key == KeyCode.LeftControl)
@@ -37,7 +36,7 @@ public static unsafe class KeysManager
         view.FireKeyEvent(ULKeyEvent.KeyDown(key, key, false, modifiers));
     }
 
-    static void KeyUp(KeyEvent* keyevent)
+    static void KeyUp(KeyEvent* keyevent, ULView view)
     {
 
         if (keyevent->key == KeyCode.LeftControl)
@@ -56,7 +55,7 @@ public static unsafe class KeysManager
         view.FireKeyEvent(ULKeyEvent.KeyUp(key, key, false, modifiers));
     }
 
-    public static void InputText(InputTextEvent* keyevent)
+    public static void InputText(InputTextEvent* keyevent, ULView view)
     {
         view.FireKeyEvent(ULKeyEvent.Character((char)keyevent->character, modifiers));
     }

@@ -1,12 +1,8 @@
-﻿using System;
-using System.IO;
-using System.IO.MemoryMappedFiles;
-using System.Threading;
-using System.Runtime.InteropServices;
-using UltralightUnity;
+﻿using UltralightUnity;
 
 class Program
 {
+    public static ULRenderer Renderer {get; private set;}
     unsafe static void Main()
     {
         NativeLoader.Load("libUltralightCore.so");
@@ -19,29 +15,23 @@ class Program
 
         UltralightPlatform.Initialize();
         var config = new ULConfig();
-        var renderer = new ULRenderer(config);
-
-        var viewConfig = new ULViewConfig();
-        viewConfig.SetIsAccelerated(false);
-        
-        var view = renderer.CreateView(UltralightManager.WIDTH, UltralightManager.HEIGHT, viewConfig);
-        MouseManager.view = view;
-        KeysManager.view = view;
-
-        view.LoadURL("https://google.com");
+        Renderer = new ULRenderer(config);
 
         ultralightManager.Init();
 
         int frame = 0;
         var fps = new FpsCounter();
+        Console.WriteLine("Starting ultralight");
         while (true)
         {
-            
-            ultralightManager.Update(view.GetSurface().GetBitmap());
+            ultralightManager.BeforeUpdate();
 
-            renderer.Update();
-            renderer.RefreshDisplay(0);
-            renderer.Render();
+            Renderer.Update();
+            Renderer.RefreshDisplay(0);
+            Renderer.Render();
+
+            ultralightManager.Update();
+
             frame++;
             fps.Frame();
         }

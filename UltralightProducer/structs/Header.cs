@@ -6,30 +6,18 @@ public unsafe struct Header
     public uint magic;
 
     /* offsets */
-    public uint mouseOffset;
-    public uint keyOffset;
-    public uint textOffset;
-    public uint frameOffset;
+    public uint requestViewOffset;
+    public uint destroyViewOffset;
 
+    /* Request View */
+    public uint RequestViewEventWrite;
+    public uint RequestViewEventRead;
 
-    /* images */
-    public uint width;
-    public uint height;
-    public uint bufferSize;
-    public uint writeIndex;
+    /* Destroy View */
+    public uint DestroyViewEventWrite;
+    public uint DestroyViewEventRead;
+
+    /* Frames */
     public uint frameCounter;
     public uint requestCounter;
-    public uint resizeCounter;
-
-    /* mouse */
-    public uint buttonEventWrite;
-    public uint buttonEventRead;
-
-    /* key */
-    public uint keyEventWrite;
-    public uint keyEventRead;
-
-    /* text */
-    public uint inputTextEventWrite;
-    public uint inputTextEventRead;
 }
