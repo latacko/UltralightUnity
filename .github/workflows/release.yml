@@ -39,13 +39,15 @@ jobs:
       - name: Archive release
         run: |
           cd publish
-          tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer resources unitySample.unitypackage
+          tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer resources
           mv UltralightProducer-linux-x64.tar.gz ../
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: UltralightProducer-linux-x64.tar.gz
+          files: |
+            UltralightProducer-linux-x64.tar.gz
+            unitySample.unitypackage
           name: Release ${{ github.ref_name }}
           generate_release_notes: true
         env:
