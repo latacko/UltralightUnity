@@ -105,10 +105,9 @@ public unsafe class UltralightManager : IDisposable
 
     public void Update(ULBitmap bitmap)
     {
-        if (header->requestCounter <= header->frameCounter)
+        while (header->requestCounter <= header->frameCounter)
         {
-            Thread.Yield();
-            return;
+            Thread.Sleep(1);
         }
 
         Header* h = (Header*)basePtr;
