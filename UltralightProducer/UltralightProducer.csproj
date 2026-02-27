@@ -3,10 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UltralightUnity\UltralightUnity.csproj" />
 
-    <EmbeddedResource Include="libs/libAppCore.so" />
-    <EmbeddedResource Include="libs/libUltralight.so" />
-    <EmbeddedResource Include="libs/libUltralightCore.so" />
-    <EmbeddedResource Include="libs/libWebCore.so" />
+    <EmbeddedResource Include="libs/**" />
     <None Include="resources/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
@@ -20,6 +17,6 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
 
-    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 </Project>

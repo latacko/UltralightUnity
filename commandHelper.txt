@@ -1,2 +1,0 @@
-git tag -a v0.1.6 -m "Test" // creates new version tag
-git push origin v0.1.6 // publish new version and build Release

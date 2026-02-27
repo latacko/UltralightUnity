@@ -6,10 +6,10 @@ class Program
     public static UltralightManager Manager {get; private set;}
     unsafe static void Main()
     {
-        NativeLoader.Load("libUltralightCore.so");
-        NativeLoader.Load("libWebCore.so");
-        NativeLoader.Load("libUltralight.so");
-        NativeLoader.Load("libAppCore.so");
+        NativeLoader.Load("UltralightCore");
+        NativeLoader.Load("WebCore");
+        NativeLoader.Load("Ultralight");
+        NativeLoader.Load("AppCore");
 
         AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);  
 

@@ -1,20 +1,19 @@
-name: Build & Release (Linux x64)
+name: Build & Release (Linux + Windows x64)
 
 on:
   push:
     tags:
-      - 'v*'   # Trigger on version tags like v1.0.0
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
@@ -24,29 +23,82 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish (Self-contained, single file)
+      - name: Publish Linux
         run: |
           dotnet publish UltralightProducer/UltralightProducer.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained true \
             /p:PublishSingleFile=true \
-            -o ./publish
+            -o ./publish-linux
 
       - name: Make binary executable
-        run: chmod +x ./publish/UltralightProducer
+        run: chmod +x ./publish-linux/UltralightProducer
 
-      - name: Archive release
+      - name: Archive Linux
         run: |
-          cd publish
+          cd publish-linux
           tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer resources
           mv UltralightProducer-linux-x64.tar.gz ../
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: UltralightProducer-linux-x64.tar.gz
+
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish Windows
+        run: |
+          dotnet publish UltralightProducer/UltralightProducer.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            /p:PublishSingleFile=true `
+            -o publish-windows
+
+      - name: Archive Windows
+        run: |
+          cd publish-windows
+          powershell Compress-Archive -Path UltralightProducer.exe, resources -DestinationPath ../UltralightProducer-win-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: UltralightProducer-win-x64.zip
+
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Move artifacts
+        run: |
+          mv linux-build/UltralightProducer-linux-x64.tar.gz .
+          mv windows-build/UltralightProducer-win-x64.zip .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             UltralightProducer-linux-x64.tar.gz
+            UltralightProducer-win-x64.zip
             unitySample.unitypackage
           name: Release ${{ github.ref_name }}
           generate_release_notes: true

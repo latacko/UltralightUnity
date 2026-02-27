@@ -1,16 +1,25 @@
-using System;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
 static class NativeLoader
 {
-    public static void Load(string libName)
+    private static string GetResourcePath(string fileName)
     {
-        string resourceName = Assembly.GetExecutingAssembly()
-            .GetName().Name + ".libs." + libName;
+        string platformFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win-x64" : "linux-x64";
 
-        string tempPath = Path.Combine(Path.GetTempPath(), libName);
+        return $"{Assembly.GetExecutingAssembly().GetName().Name}.libs.{platformFolder}.{fileName}";
+    }
+    public static void Load(string baseName)
+    {
+        string fileName = GetPlatformLibraryName(baseName);
+
+        string resourceName = GetResourcePath(fileName);
+
+        string tempDir = Path.Combine(Path.GetTempPath(), "UltralightUnity", Assembly.GetExecutingAssembly().GetName().Version!.ToString());
+
+        Directory.CreateDirectory(tempDir);
+
+        string tempPath = Path.Combine(tempDir, fileName);
 
         using Stream? stream = Assembly.GetExecutingAssembly()
             .GetManifestResourceStream(resourceName);
@@ -22,5 +31,16 @@ static class NativeLoader
         stream.CopyTo(fs);
 
         NativeLibrary.Load(tempPath);
+    }
+
+    private static string GetPlatformLibraryName(string baseName)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return baseName + ".dll";
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return "lib" + baseName + ".so";
+
+        throw new PlatformNotSupportedException();
     }
 }
