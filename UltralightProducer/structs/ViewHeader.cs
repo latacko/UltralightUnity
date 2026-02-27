@@ -11,7 +11,9 @@ public struct ViewHeader
     public uint textOffset;
     public uint resizeOffset;
     public uint frameOffset;
-    public uint loadEventOffset;
+    public uint loadEventsOffset;
+    public uint setUpHTML_OR_URL_Offset;
+    public uint baseEventsOffset;
 
 
     /* images */
@@ -35,12 +37,19 @@ public struct ViewHeader
     public uint keyEventWrite;
     public uint keyEventRead;
 
-    /* Load Url or html */
-    public uint LoadEventWrite;
-    public uint LoadViewEventRead;
-
-
     /* text */
     public uint inputTextEventWrite;
     public uint inputTextEventRead;
+
+    /* Events */
+    public byte loadEventsWrite;
+    public byte loadEventsRead;
+
+    /* Events like begin, finish loading And On DOM Ready */
+    public byte baseEventsWrite;
+    public byte baseEventsRead;
+
+    /* Load Url or html */
+    public uint setUpEventWrite;
+    public uint setUpEventRead;
 }

@@ -173,6 +173,8 @@ public sealed class ULView : IDisposable
 
     public void Dispose()
     {
+        if (Handle.IsClosed)
+            return;
         NativeView.ulViewSetChangeTitleCallback(Handle, null, IntPtr.Zero);
         NativeView.ulViewSetChangeURLCallback(Handle, null, IntPtr.Zero);
         NativeView.ulViewSetBeginLoadingCallback(Handle, null, IntPtr.Zero);

@@ -3,6 +3,7 @@
 class Program
 {
     public static ULRenderer Renderer {get; private set;}
+    public static UltralightManager Manager {get; private set;}
     unsafe static void Main()
     {
         NativeLoader.Load("libUltralightCore.so");
@@ -10,30 +11,44 @@ class Program
         NativeLoader.Load("libUltralight.so");
         NativeLoader.Load("libAppCore.so");
 
-        using var ultralightManager = new UltralightManager();
+        AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);  
+
+        Manager = new UltralightManager();
 
 
         UltralightPlatform.Initialize();
         var config = new ULConfig();
         Renderer = new ULRenderer(config);
 
-        ultralightManager.Init();
+        Manager.Init();
 
         int frame = 0;
         var fps = new FpsCounter();
         Console.WriteLine("Starting ultralight");
-        while (true)
+        while (Manager.TestIfRun())
         {
-            ultralightManager.BeforeUpdate();
+            if (Manager.TestIfSleep())
+            {
+                Thread.Sleep(1);
+                continue;
+            }
+            Manager.BeforeUpdate();
 
             Renderer.Update();
             Renderer.RefreshDisplay(0);
             Renderer.Render();
 
-            ultralightManager.Update();
+            Manager.Update();
 
             frame++;
             fps.Frame();
         }
+        CurrentDomain_ProcessExit(null, null);
+    }
+
+    private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
+    {
+        Console.WriteLine("Invalid magic. Closing...");
+        Manager.Dispose();
     }
 }

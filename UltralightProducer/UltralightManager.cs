@@ -6,9 +6,9 @@ using UltralightUnity;
 
 public unsafe class UltralightManager : IDisposable
 {
-    public const string BASE_PATH = "/dev/shm/";
-    const string PATH = BASE_PATH + "ultralight_manager";
     const uint MAGIC = 0x6C617461;
+
+    const string PATH = BASE_FILE_NAME.BASE_PATH + BASE_FILE_NAME.MANAGER;
 
     MemoryMappedFile mmf;
     MemoryMappedViewAccessor accessor;
@@ -31,10 +31,7 @@ public unsafe class UltralightManager : IDisposable
             requestViewEventsSize +
             requestViewEventsSize;
 
-        var fs = new FileStream(PATH, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-        fs.SetLength(total);
-
-        mmf = MemoryMappedFile.CreateFromFile(fs, null, total, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
+        mmf = CreateMMF.CreateMemoryMappedFile(BASE_FILE_NAME.MANAGER, total);
 
         accessor = mmf.CreateViewAccessor();
 
@@ -64,15 +61,13 @@ public unsafe class UltralightManager : IDisposable
         header->requestCounter = 0;
     }
 
+    public bool TestIfSleep()=>header->requestCounter <= header->frameCounter;
+
     public void BeforeUpdate()
     {
-        while (header->requestCounter <= header->frameCounter)
-        {
-            Thread.Sleep(1);
-        }
-
         ReadRequestViewEvents();
         ReadDestroyViewEvents();
+        StringManager.TestIfDelete();
 
         foreach (var view in views)
         {
@@ -103,7 +98,7 @@ public unsafe class UltralightManager : IDisposable
             header->RequestViewEventRead++;
         }
     }
-
+    
     uint CreateView(RequestViewEvent* ev)
     {
         var _random = new Random();
@@ -163,5 +158,10 @@ public unsafe class UltralightManager : IDisposable
         }
 
         GC.SuppressFinalize(this);
+    }
+
+    internal bool TestIfRun()
+    {
+        return header->magic == MAGIC;
     }
 }

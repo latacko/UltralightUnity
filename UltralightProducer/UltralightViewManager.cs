@@ -4,9 +4,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using UltralightUnity;
 
-public unsafe class UltralightViewManager : IDisposable
+public unsafe partial class UltralightViewManager : IDisposable
 {
-    const string BASE_FILE_NAME = "ultralight_view_";
     readonly uint ID;
     readonly string PATH;
     const uint MAGIC = 0x6C617461;
@@ -16,7 +15,7 @@ public unsafe class UltralightViewManager : IDisposable
 
     const int BUFS = 3;
 
-    readonly int bufferSize;
+    int bufferSize;
     readonly MemoryMappedFile mmf;
     readonly MemoryMappedViewAccessor accessor;
 
@@ -27,13 +26,13 @@ public unsafe class UltralightViewManager : IDisposable
     readonly int mouseOffset;
     readonly int keyOffset;
     readonly int textOffset;
-    readonly int resizeOffset;
-    readonly int loadEventOffset;
-    readonly int frameOffset;
-    #endregion
 
-    #region buffers
-    string toLoad = "";
+    readonly int resizeOffset;
+    readonly int loadEventsOffset;
+    readonly int setupHTML_OR_URL_Offset;
+    readonly int baseEventsOffset;
+
+    readonly int frameOffset;
     #endregion
 
     public readonly ULView View;
@@ -49,15 +48,19 @@ public unsafe class UltralightViewManager : IDisposable
         _viewConfig.SetIsAccelerated(false);
         _viewConfig.SetIsTransparent(isTransparent);
         View = Program.Renderer.CreateView(width, height, _viewConfig);
+        RegisterEvents();
 
-        this.PATH = UltralightManager.BASE_PATH + BASE_FILE_NAME + id.ToString();
+
+        this.PATH = BASE_FILE_NAME.BASE_PATH + BASE_FILE_NAME.VIEW + id.ToString();
 
         bufferSize = (int)WIDTH * (int)HEIGHT * 4;
         int mouseEventsSize = sizeof(MouseEvent) * ChunksData.MOUSE_EVENT_CHUNKS;
         int keyEventsSize = sizeof(KeyEvent) * ChunksData.KEY_EVENT_CHUNKS;
         int textEventsSize = sizeof(InputTextEvent) * ChunksData.TEXT_EVENT_CHUNKS;
         int resizeEventsSize = sizeof(ResizeEvent) * ChunksData.RESIZE_EVENT_CHUNKS;
-        int loadEventsSize = sizeof(LoadEvent) * ChunksData.LOAD_EVENT_CHUNKS;
+        int loadEventsSize = sizeof(LoadEventId) * ChunksData.LOAD_EVENT_CHUNKS;
+        int setUp_HTML_OR_URL_Size = sizeof(LoadEventId) * ChunksData.SETUP_HTML_OR_URL;
+        int baseEventSize = sizeof(BaseEvent) * ChunksData.BASE_EVENT_CHUNKS;
 
         int total =
             Marshal.SizeOf<ViewHeader>() +
@@ -66,12 +69,11 @@ public unsafe class UltralightViewManager : IDisposable
             textEventsSize +
             resizeEventsSize +
             loadEventsSize +
+            setUp_HTML_OR_URL_Size +
+            baseEventSize +
             bufferSize * BUFS;
 
-        var fs = new FileStream(PATH, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-        fs.SetLength(total);
-
-        mmf = MemoryMappedFile.CreateFromFile(fs, null, total, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
+        mmf = CreateMMF.CreateMemoryMappedFile(BASE_FILE_NAME.VIEW + id.ToString(), total);
 
         accessor = mmf.CreateViewAccessor();
 
@@ -84,8 +86,10 @@ public unsafe class UltralightViewManager : IDisposable
         keyOffset = mouseOffset + mouseEventsSize;
         textOffset = keyOffset + keyEventsSize;
         resizeOffset = textOffset + textEventsSize;
-        loadEventOffset = resizeOffset + resizeEventsSize;
-        frameOffset = loadEventOffset + loadEventsSize;
+        loadEventsOffset = resizeOffset + resizeEventsSize;
+        setupHTML_OR_URL_Offset = loadEventsOffset + loadEventsSize;
+        baseEventsOffset = setupHTML_OR_URL_Offset + setUp_HTML_OR_URL_Size;
+        frameOffset = baseEventsOffset + baseEventSize;
 
         header->magic = MAGIC;
 
@@ -94,7 +98,9 @@ public unsafe class UltralightViewManager : IDisposable
         header->keyOffset = (uint)keyOffset;
         header->textOffset = (uint)textOffset;
         header->resizeOffset = (uint)resizeOffset;
-        header->loadEventOffset = (uint)loadEventOffset;
+        header->loadEventsOffset = (uint)loadEventsOffset;
+        header->setUpHTML_OR_URL_Offset = (uint)setupHTML_OR_URL_Offset;
+        header->baseEventsOffset = (uint)baseEventsOffset;
         header->frameOffset = (uint)frameOffset;
 
         /* FRAMES */
@@ -102,7 +108,7 @@ public unsafe class UltralightViewManager : IDisposable
         header->height = HEIGHT;
         header->bufferSize = (uint)bufferSize;
         header->writeIndex = 0;
-        header->resizeCounter=0;
+        header->resizeCounter = 0;
 
 
         /* RESIZE */
@@ -123,8 +129,16 @@ public unsafe class UltralightViewManager : IDisposable
         header->keyEventRead = 0;
 
         /* Load Event */
-        header->LoadEventWrite = 0;
-        header->LoadViewEventRead = 0;
+        header->setUpEventWrite = 0;
+        header->setUpEventRead = 0;
+
+        /* Events to unity */
+        header->loadEventsWrite = 0;
+        header->loadEventsRead = 0;
+
+        /* Events to unity */
+        header->baseEventsWrite = 0;
+        header->baseEventsRead = 0;
     }
 
     public void BeforeUpdate()
@@ -137,7 +151,9 @@ public unsafe class UltralightViewManager : IDisposable
 
         ReadResizeEvent();
 
-        ReadLoadEvents();
+        ReadSetUpEvents();
+
+
     }
 
     public void Update()
@@ -207,6 +223,13 @@ public unsafe class UltralightViewManager : IDisposable
 
             View.Resize(ev->width, ev->height);
 
+            header->width = ev->width;
+            header->height = ev->height;
+
+            bufferSize = (int)WIDTH * (int)HEIGHT * 4;
+            header->bufferSize = (uint)bufferSize;
+
+
             header->resizeCounter++;
             header->resizeEventRead++;
         }
@@ -225,58 +248,55 @@ public unsafe class UltralightViewManager : IDisposable
         }
     }
 
-    
-    void ReadLoadEvents()
+    void ReadSetUpEvents()
     {
         Thread.MemoryBarrier();
-        while (header->LoadViewEventRead < header->LoadEventWrite)
+        while (header->setUpEventRead < header->setUpEventWrite)
         {
-            int index = (int)(header->LoadViewEventRead % ChunksData.LOAD_EVENT_CHUNKS);
-            LoadEvent* ev = (LoadEvent*)(basePtr + loadEventOffset + index * sizeof(LoadEvent));
+            int index = (int)(header->setUpEventRead % ChunksData.SETUP_HTML_OR_URL);
+            LoadEventId* ev = (LoadEventId*)(basePtr + setupHTML_OR_URL_Offset + index * sizeof(LoadEventId));
 
-            var _chunk = ReadStringFromBuffer(ev->length, ev->data);
-            toLoad += _chunk;
-            if (ev->thereIsNextChunk == 0)
+            (var eventType, var headerObject, var stringList) = StringManager.ReadString(ev->id);
+
+            if (eventType == EventType.Set_HTML_OR_URL && headerObject != null)
             {
-                if (ev->type == 0)
-                    View.LoadURL(toLoad);
+                SetUpHTMLORURLHeader _header = (SetUpHTMLORURLHeader)headerObject;
+                if (_header.type == SetUpType.url)
+                    View.LoadURL(stringList[0]);
                 else
-                    View.LoadHTML(toLoad);
-                toLoad = "";
+                {
+                    View.LoadHTML(stringList[0]);
+                }
             }
 
-            header->LoadViewEventRead++;
+            header->setUpEventRead++;
         }
     }
 
-    public static string ReadStringFromBuffer(uint length, byte* dataPtr)
+    void WriteBaseEvent(BaseEventType type)
     {
-        if (length > 256)
-            length = 256;
+        int index = (int)(header->baseEventsWrite % ChunksData.KEY_EVENT_CHUNKS);
 
-        return Encoding.UTF8.GetString(dataPtr, (int)length);
+        BaseEvent* ev = (BaseEvent*)(basePtr + baseEventsOffset + index * sizeof(BaseEvent));
+
+        ev->type = type;
+
+        Thread.MemoryBarrier();
+
+        header->baseEventsWrite++;
     }
 
-    public static List<byte[]> GetStringChunks(string str)
+    void WriteLoadAdvancedEvent(uint id)
     {
-        List<byte[]> chunks = [];
+        int index = (int)(header->loadEventsWrite % ChunksData.LOAD_EVENT_CHUNKS);
 
-        byte[] utf8 = Encoding.UTF8.GetBytes(str);
-        int offset = 0;
+        LoadEventId* ev = (LoadEventId*)(basePtr + loadEventsOffset + index * sizeof(LoadEventId));
 
-        while (offset < utf8.Length)
-        {
-            int take = Math.Min(ChunksData.MAX_BYTES_PER_CHUNK, utf8.Length - offset);
+        ev->id = id;
 
-            byte[] chunk = new byte[take];
-            Array.Copy(utf8, offset, chunk, 0, take);
+        Thread.MemoryBarrier();
 
-            chunks.Add(chunk);
-
-            offset += take;
-        }
-
-        return chunks;
+        header->loadEventsWrite++;
     }
 
     public void Dispose()
