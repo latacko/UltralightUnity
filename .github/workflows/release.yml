@@ -92,20 +92,20 @@ jobs:
   release:
     needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
-
+  
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: linux-build
-
+  
       - uses: actions/download-artifact@v4
         with:
           name: windows-build
-
+  
       - uses: actions/download-artifact@v4
         with:
           name: unity-package
-
+  
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -113,7 +113,5 @@ jobs:
             UltralightProducer-linux-x64.tar.gz
             UltralightProducer-win-x64.zip
             unitySample.unitypackage
-        name: Release ${{ github.ref_name }}
-        generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
