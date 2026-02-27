@@ -1,4 +1,4 @@
-name: Build & Release (Linux + Windows x64)
+name: Build & Release (Linux + Windows)
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish Linux
+      - name: Publish Linux (single file)
         run: |
           dotnet publish UltralightProducer/UltralightProducer.csproj \
             -c Release \
@@ -41,10 +41,17 @@ jobs:
           tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer resources
           mv UltralightProducer-linux-x64.tar.gz ../
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: UltralightProducer-linux-x64.tar.gz
+
+      - name: Upload Unity Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-package
+          path: unitySample.unitypackage
 
 
   build-windows:
@@ -61,7 +68,7 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish Windows
+      - name: Publish Windows (single file)
         run: |
           dotnet publish UltralightProducer/UltralightProducer.csproj `
             -c Release `
@@ -75,7 +82,8 @@ jobs:
           cd publish-windows
           powershell Compress-Archive -Path UltralightProducer.exe, resources -DestinationPath ../UltralightProducer-win-x64.zip
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: UltralightProducer-win-x64.zip
@@ -87,11 +95,16 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v4
+        with:
+          name: linux-build
 
-      - name: Move artifacts
-        run: |
-          mv linux-build/UltralightProducer-linux-x64.tar.gz .
-          mv windows-build/UltralightProducer-win-x64.zip .
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-build
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: unity-package
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -100,7 +113,7 @@ jobs:
             UltralightProducer-linux-x64.tar.gz
             UltralightProducer-win-x64.zip
             unitySample.unitypackage
-          name: Release ${{ github.ref_name }}
-          generate_release_notes: true
+        name: Release ${{ github.ref_name }}
+        generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
