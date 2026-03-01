@@ -15,6 +15,8 @@ public struct ViewHeader
     public uint setUpHTML_OR_URL_Offset;
     public uint baseEventsOffset;
 
+    public byte openInspector;
+
 
     /* images */
     public uint width;

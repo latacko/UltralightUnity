@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential)]
 public struct BaseInfoHeader
 {
-    public byte toDispose;
     public EventType type;
     public uint stringsCount;
     public uint DetailHeaderOffset;

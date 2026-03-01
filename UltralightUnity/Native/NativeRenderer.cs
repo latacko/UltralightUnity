@@ -7,7 +7,7 @@ namespace UltralightUnity.Native;
 internal static class NativeRenderer
 {
     [DllImport(NativeLib.LibUltralight)]
-    internal static extern ULRendererHandle ulCreateRenderer(ULConfigHandle config);
+    internal static extern ULRendererHandle ulCreateRenderer(IntPtr config);
 
     [DllImport(NativeLib.LibUltralight)]
     internal static extern void ulDestroyRenderer(IntPtr renderer);

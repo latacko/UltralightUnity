@@ -11,4 +11,6 @@ public struct ChunksData
     public const int BASE_EVENT_CHUNKS = 3;
     public const int REQUEST_VIEW_EVENT_CHUNKS = 128;
     public const int DESTORY_VIEW_EVENT_CHUNKS = 128;
+    public const int FILE_OPEN_CHUNKS = 20;
+    public const int FILE_EXIST_CHUNKS = 20;
 }

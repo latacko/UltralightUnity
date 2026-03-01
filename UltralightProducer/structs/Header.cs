@@ -5,6 +5,10 @@ public unsafe struct Header
 {
     public uint magic;
 
+    /* Screen size */
+    public uint ScreenWidth;
+    public uint ScreenHeight;
+
     /* offsets */
     public uint requestViewOffset;
     public uint destroyViewOffset;

@@ -34,6 +34,8 @@ internal class Program
 
         game.Run();
 
+        game.Close();
+
         // Console.WriteLine("Test1");
 
 

@@ -19,7 +19,7 @@ public unsafe class UltralightManager : IDisposable
     int requestViewOffset;
     int destroyViewOffset;
 
-    readonly Dictionary<uint, UltralightViewManager> views = [];
+    public readonly Dictionary<uint, UltralightViewManager> Views = [];
 
     public void Init()
     {
@@ -63,13 +63,17 @@ public unsafe class UltralightManager : IDisposable
 
     public bool TestIfSleep()=>header->requestCounter <= header->frameCounter;
 
+    public (uint, uint) GetScreenSize()
+    {
+        return (header->ScreenWidth, header->ScreenHeight);
+    }
+
     public void BeforeUpdate()
     {
         ReadRequestViewEvents();
         ReadDestroyViewEvents();
-        StringManager.TestIfDelete();
 
-        foreach (var view in views)
+        foreach (var view in Views)
         {
             view.Value.BeforeUpdate();
         }
@@ -79,7 +83,7 @@ public unsafe class UltralightManager : IDisposable
 
     public void Update()
     {
-        foreach (var view in views)
+        foreach (var view in Views)
         {
             view.Value.Update();
         }
@@ -99,17 +103,17 @@ public unsafe class UltralightManager : IDisposable
         }
     }
     
-    uint CreateView(RequestViewEvent* ev)
+    public uint CreateView(RequestViewEvent* ev)
     {
         var _random = new Random();
         uint _id;
         do
         {
             _id = (uint)_random.Next(1000000000, int.MaxValue);
-        } while (views.ContainsKey(_id));
+        } while (Views.ContainsKey(_id));
 
         Console.WriteLine("Creating view it id: " + _id);
-        views[_id] = new UltralightViewManager(_id, ev->width, ev->height, ev->isTransparent == 1);
+        Views[_id] = new UltralightViewManager(_id, ev->width, ev->height, ev->isTransparent == 1);
         Console.WriteLine("Created view it id: " + _id);
         return _id;
     }
@@ -122,8 +126,8 @@ public unsafe class UltralightManager : IDisposable
             DestroyViewEvent* ev = (DestroyViewEvent*)(basePtr + destroyViewOffset + index * sizeof(DestroyViewEvent));
 
             Console.WriteLine("Destroying view");
-            views[ev->id].Dispose();
-            views.Remove(ev->id);
+            Views[ev->id].Dispose();
+            Views.Remove(ev->id);
             Console.WriteLine("Destroyed view");
 
             header->DestroyViewEventRead++;
@@ -135,7 +139,7 @@ public unsafe class UltralightManager : IDisposable
 
         Console.WriteLine("cleaning up...");
 
-        foreach (var view in views)
+        foreach (var view in Views)
         {
             view.Value.Dispose();
         }

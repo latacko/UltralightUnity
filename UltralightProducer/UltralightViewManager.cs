@@ -152,8 +152,7 @@ public unsafe partial class UltralightViewManager : IDisposable
         ReadResizeEvent();
 
         ReadSetUpEvents();
-
-
+        ReadOpenInspector();
     }
 
     public void Update()
@@ -299,10 +298,25 @@ public unsafe partial class UltralightViewManager : IDisposable
         header->loadEventsWrite++;
     }
 
+    void ReadOpenInspector()
+    {
+        if (header->openInspector == 1)
+        {
+            header->openInspector=0;
+            View.OpenInspector();
+            Console.WriteLine("Requested inspector");
+        }
+    }
+
     public void Dispose()
     {
 
         Console.WriteLine("cleaning up...");
+
+        if (inspectorView != null)
+        {
+            inspectorView.Dispose();
+        }
 
         try
         {

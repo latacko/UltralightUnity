@@ -3,8 +3,10 @@
   <ItemGroup>
     <ProjectReference Include="..\UltralightUnity\UltralightUnity.csproj" />
 
-    <EmbeddedResource Include="libs/**" />
+    <None Include="runtimes/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <None Include="resources/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Include="inspector/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Include="license/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <PropertyGroup>

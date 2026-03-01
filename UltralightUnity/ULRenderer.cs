@@ -9,7 +9,7 @@ public sealed class ULRenderer : IDisposable
 
     public ULRenderer(ULConfig config)
     {
-        Handle = NativeRenderer.ulCreateRenderer(config.Handle);
+        Handle = NativeRenderer.ulCreateRenderer(config.Handle.DangerousGetHandle());
 
         if (Handle.IsInvalid)
             throw new InvalidOperationException("ulCreateRenderer failed.");
@@ -30,7 +30,6 @@ public sealed class ULRenderer : IDisposable
         using var _addressStr = new String(address);
         return NativeRenderer.ulStartRemoteInspectorServer(Handle, _addressStr.Handle, port);
     }
-
 
     public ULView CreateView(uint width, uint height, ULViewConfig config)
     {

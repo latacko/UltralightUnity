@@ -3,15 +3,15 @@ using UltralightUnity;
 
 public static class UltralightPlatform
 {
-    private static ULString _baseDir;
-    private static ULString _logPath;
+    public static string BaseDir;
 
     public static void Initialize()
     {
         ULPlatform.EnablePlatformFontLoader();
 
-        ULPlatform.EnablePlatformFileSystem(AppDomain.CurrentDomain.BaseDirectory);
+        Console.WriteLine(BaseDir);
+        // ULPlatform.EnablePlatformFileSystem(BaseDir);
 
-        ULPlatform.EnableDefaultLogger(AppDomain.CurrentDomain.BaseDirectory + "data.log");
+        ULPlatform.EnableDefaultLogger(BaseDir + "data.log");
     }
 }

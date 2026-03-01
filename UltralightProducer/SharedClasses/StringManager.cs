@@ -35,14 +35,11 @@ public static class StringManager
         byte[][] _buffers = new byte[strings.Length][];
         StringHeader[] headers = new StringHeader[strings.Length];
 
-        Console.WriteLine("Writing type: " + type);
-
         for (int i = 0; i < strings.Length; i++)
         {
             if (strings[i].Trim().Length == 0)
                 continue;
 
-            Console.WriteLine("Writing: " + strings[i]);
             _buffers[i] = Encoding.UTF8.GetBytes(strings[i]);
 
             headers[i] = new()
@@ -91,7 +88,6 @@ public static class StringManager
         using var _accessor = _mmf.CreateViewAccessor();
 
         _accessor.Read(0, out BaseInfoHeader header);
-        header.toDispose = 1;
         Type? _detailHeader = GetHeaderHelper.Get(header.type);
         _accessor.Write(0, ref header);
 
@@ -120,56 +116,48 @@ public static class StringManager
                 _buffers[i] = new byte[headers[i].length];
                 _accessor.ReadArray(headers[i].offset, _buffers[i], 0, headers[i].length);
                 _strings.Add(Encoding.UTF8.GetString(_buffers[i]));
-                _stringsOffset = headers[i].offset;
+                _stringsOffset = headers[i].offset+headers[i].length;
             }
 
             return (header.type, detailHeader, _strings);
         }
-        catch
+        catch (Exception e)
         {
-            throw new Exception("Failed paring detailed header");
+            throw new Exception("Failed paring detailed header\n" + e.Message);
         }
         finally
         {
             handle.Free();
-        }
-    }
-
-    static readonly List<uint> toDelete = new();
-    public static void TestIfDelete()
-    {
-        toDelete.Clear();
-        foreach (var item in generatedStrings)
-        {
-            item.Value.Accessor.Read(0, out BaseInfoHeader header);
-            if (header.toDispose == 0) continue;
-
-            toDelete.Add(item.Key);
-        }
-
-        foreach (var id in toDelete)
-        {
             DisposeString(id);
         }
     }
 
+    // static readonly List<uint> toDelete = new();
+    // public static void TestIfDelete()
+    // {
+    //     toDelete.Clear();
+    //     foreach (var item in generatedStrings)
+    //     {
+    //         item.Value.Accessor.Read(0, out BaseInfoHeader header);
+    //         if (header.toDispose == 0) continue;
+
+    //         toDelete.Add(item.Key);
+    //     }
+
+    //     foreach (var id in toDelete)
+    //     {
+    //         DisposeString(id);
+    //     }
+    // }
+
     public static void DisposeString(uint id)
     {
-        if (generatedStrings.TryGetValue(id, out var stringData))
-        {
-            stringData.Accessor.Dispose();
-            stringData.Mmf.Dispose();
-
-
 #if UNITY_STANDALONE_WIN
 #elif UNITY_STANDALONE_LINUX
             File.Delete(CreateMMF.LINUX_PATH + BASE_FILE_NAME.STRING + id.ToString());
 #else
-            if (OperatingSystem.IsLinux())
-                File.Delete(CreateMMF.LINUX_PATH + BASE_FILE_NAME.STRING + id.ToString());
+        if (OperatingSystem.IsLinux())
+            File.Delete(CreateMMF.LINUX_PATH + BASE_FILE_NAME.STRING + id.ToString());
 #endif
-
-            generatedStrings.Remove(id);
-        }
     }
 }

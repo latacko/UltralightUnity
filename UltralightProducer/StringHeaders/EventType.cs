@@ -6,7 +6,9 @@ public enum EventType : byte
     UrlChanged,
     LoadFailed,
     Message,
-    Set_HTML_OR_URL
+    Set_HTML_OR_URL,
+    FileExist,
+    FileOpen
 }
 
 public static class GetHeaderHelper
@@ -21,6 +23,10 @@ public static class GetHeaderHelper
                 return null;
             case EventType.Set_HTML_OR_URL:
                 return typeof(SetUpHTMLORURLHeader);
+            case EventType.FileExist:
+                return null;
+            case EventType.FileOpen:
+                return null;
             default:
                 throw new System.Exception("Tried loading string file with unknown detailHeader type. Declared type: " + type);
         }

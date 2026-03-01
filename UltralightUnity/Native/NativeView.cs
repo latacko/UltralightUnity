@@ -71,6 +71,9 @@ internal static class NativeView
     [DllImport(LibUltralight, CallingConvention = CallingConvention.Cdecl)]
     public static extern void ulViewResize(ULViewHandle view, uint width, uint height);
 
+    [DllImport(LibUltralight, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void ulViewCreateLocalInspectorView(ULViewHandle view);
+
     [DllImport(LibUltralight)]
     public static extern IntPtr ulViewEvaluateScript(ULViewHandle view, ULStringHandle js_string, out IntPtr exception);
 
@@ -89,7 +92,11 @@ internal static class NativeView
     internal delegate void AddConsoleMessageCallback(IntPtr userData, IntPtr view, ULMessageSource source, ULMessageLevel level, IntPtr message, uint line_number, uint column_number, IntPtr source_id);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void FailLoadingCallback(IntPtr userData, IntPtr view, IntPtr url, IntPtr description, int errorCode);
+    internal delegate void FailLoadingCallback(IntPtr userData, IntPtr caller, ulong frameId, [MarshalAs(UnmanagedType.I1)] bool isMainFrame, IntPtr url, IntPtr description, IntPtr errorDomain, int errorCode);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate ULViewHandle ULCreateInspectorViewCallback(IntPtr userData, ULViewHandle callerView, [MarshalAs(UnmanagedType.I1)] bool isLocal, IntPtr inspected_url);
+
 
     [DllImport(LibUltralight, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void ulViewSetChangeTitleCallback(ULViewHandle view, ChangeTitleCallback? callback, IntPtr userData);
@@ -109,10 +116,11 @@ internal static class NativeView
     [DllImport(LibUltralight, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void ulViewSetFailLoadingCallback(ULViewHandle view, FailLoadingCallback? callback, IntPtr userData);
 
-
     [DllImport(LibUltralight, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void ulViewSetAddConsoleMessageCallback(ULViewHandle view, AddConsoleMessageCallback? callback, IntPtr userData);
 
 
+    [DllImport(LibUltralight, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void ulViewSetCreateInspectorViewCallback(ULViewHandle view, ULCreateInspectorViewCallback? callback, IntPtr userData);
     #endregion
 }

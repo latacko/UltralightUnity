@@ -1,5 +1,7 @@
-### QoL
-- Leave reading url throught chunks and change loading html to a seperate temp memory file. (Right now waste of space to munch chunks required for full html page)  
+### IDK
+- Inspector isn't opening after request. Callback is set. Requesting works idk what is wrong.
 
 ### BUGS
 - Reading space from unity doesn't work
+- Crashes when loading images but svgs work
+- On linux it doesnt clear every file 

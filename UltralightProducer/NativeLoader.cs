@@ -1,36 +1,19 @@
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 static class NativeLoader
 {
-    private static string GetResourcePath(string fileName)
-    {
-        string platformFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win-x64" : "linux-x64";
-
-        return $"{Assembly.GetExecutingAssembly().GetName().Name}.libs.{platformFolder}.{fileName}";
-    }
     public static void Load(string baseName)
     {
         string fileName = GetPlatformLibraryName(baseName);
 
-        string resourceName = GetResourcePath(fileName);
+        string runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win_x64" : "linux_x64";
 
-        string tempDir = Path.Combine(Path.GetTempPath(), "UltralightUnity", Assembly.GetExecutingAssembly().GetName().Version!.ToString());
+        string path = Path.Combine( AppContext.BaseDirectory, "runtimes", runtime, "native", fileName);
 
-        Directory.CreateDirectory(tempDir);
+        if (!File.Exists(path))
+            throw new Exception($"Native library not found: {path}");
 
-        string tempPath = Path.Combine(tempDir, fileName);
-
-        using Stream? stream = Assembly.GetExecutingAssembly()
-            .GetManifestResourceStream(resourceName);
-
-        if (stream == null)
-            throw new Exception($"Resource {resourceName} not found");
-
-        using FileStream fs = new FileStream(tempPath, FileMode.Create);
-        stream.CopyTo(fs);
-
-        NativeLibrary.Load(tempPath);
+        NativeLibrary.Load(path);
     }
 
     private static string GetPlatformLibraryName(string baseName)

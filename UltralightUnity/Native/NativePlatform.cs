@@ -5,14 +5,17 @@ namespace UltralightUnity.Native;
 
 internal static class NativePlatform
 {
-    private const string LibUltralight = "AppCore";
+    private const string LibAppCore = "AppCore";
 
-    [DllImport(LibUltralight)]
+    [DllImport(LibAppCore)]
     internal static extern void ulEnablePlatformFontLoader();
 
-    [DllImport(LibUltralight)]
+    [DllImport(LibAppCore)]
     internal static extern void ulEnablePlatformFileSystem(ULStringHandle baseDir);
 
-    [DllImport(LibUltralight)]
+    [DllImport(NativeLib.LibUltralight)]
+    internal static extern void ulPlatformSetFileSystem(NativeFileSystem fileSystem);
+
+    [DllImport(LibAppCore)]
     internal static extern void ulEnableDefaultLogger(ULStringHandle log_path);
 }
