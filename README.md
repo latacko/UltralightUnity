@@ -2,11 +2,10 @@
 
 Is bride to between unity and `ultralight v1.4`
 
-Currently, it only works on `Linux`
+Currently, it is working on `Linux` & `Windows`
 
-If you want to contribute to create a Windows version, you must:
-- include the required Ultralight Windows DLLs  
-- implement the MemoryMappedFile solution for Windows in UltralightManager at line 43  
+## Contribute
+c# sdk .net 10
 
 ## License
 
