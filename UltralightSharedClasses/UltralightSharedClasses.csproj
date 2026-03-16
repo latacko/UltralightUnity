@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <Target Name="CopyDllIfTargetExists"
+    AfterTargets="Build"
+    Condition="Exists('/mnt/Gry/__UNITY PROJECTS__/TestUltralight/Assets/Plugins/UltralightUnity/')">
+
+    <Copy
+      SourceFiles="$(TargetDir)$(AssemblyName).dll"
+      DestinationFolder="/mnt/Gry/__UNITY PROJECTS__/TestUltralight/Assets/Plugins/UltralightUnity/"
+      SkipUnchangedFiles="true" />
+  </Target>
+</Project>

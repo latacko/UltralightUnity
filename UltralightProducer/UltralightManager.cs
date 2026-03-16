@@ -2,6 +2,8 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
+using UltralightSharedClasses.Classes;
+using UltralightSharedClasses.Structs;
 using UltralightUnity;
 
 public unsafe class UltralightManager : IDisposable

@@ -1,4 +1,5 @@
-﻿using UltralightUnity;
+﻿using UltralightSharedClasses.Classes;
+using UltralightUnity;
 
 class Program
 {
@@ -6,6 +7,7 @@ class Program
     public static UltralightManager Manager { get; private set; }
     // public static ULFileSystem unityFs { get; private set; }
     public static UnityFileSystem unityFs { get; private set; }
+    public static CancellationTokenSource cancellationTokenDeleteLoop;
     static void Main(string[] args)
     {
         if (args.Length > 0)
@@ -20,6 +22,8 @@ class Program
         NativeLoader.Load("WebCore");
         NativeLoader.Load("Ultralight");
         NativeLoader.Load("AppCore");
+
+        cancellationTokenDeleteLoop = new();
 
         AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
 
@@ -38,8 +42,7 @@ class Program
         var fps = new FpsCounter();
         Console.WriteLine("Starting ultralight");
 
-        // Thread workingThread = new Thread(new ParameterizedThreadStart(DoJob))
-        // { IsBackground = true };
+        Task task = Task.Run((Action) DeleteLoop);
 
 
         while (Manager.TestIfRun())
@@ -63,8 +66,19 @@ class Program
         CurrentDomain_ProcessExit(null, null);
     }
 
+    private static async void DeleteLoop()
+    {
+        while (!cancellationTokenDeleteLoop.IsCancellationRequested)
+        {
+            StringManager.TestIfDelete();
+            Thread.Sleep(1000);
+        }
+    }
+
     private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
     {
+        StringManager.DeleteAll();
+        cancellationTokenDeleteLoop.Cancel();
         Console.WriteLine("Invalid magic. Closing...");
         unityFs.Dispose();
         Manager.Dispose();

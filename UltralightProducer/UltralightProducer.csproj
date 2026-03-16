@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UltralightUnity\UltralightUnity.csproj" />
+    <ProjectReference Include="..\UltralightSharedClasses\UltralightSharedClasses.csproj" />
 
     <None Include="runtimes/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <None Include="resources/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />

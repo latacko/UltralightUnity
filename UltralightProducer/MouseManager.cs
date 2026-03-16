@@ -1,3 +1,4 @@
+using UltralightSharedClasses.Structs;
 using UltralightUnity;
 using UltralightUnity.Enums;
 

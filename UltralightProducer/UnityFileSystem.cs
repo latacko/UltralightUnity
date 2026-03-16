@@ -1,5 +1,9 @@
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using UltralightSharedClasses.Classes;
+using UltralightSharedClasses.FileSystemStructs;
+using UltralightSharedClasses.StringHeaders;
+using UltralightSharedClasses.Structs;
 using UltralightUnity;
 
 public unsafe class UnityFileSystem : ULFileSystem, IDisposable
@@ -97,7 +101,7 @@ public unsafe class UnityFileSystem : ULFileSystem, IDisposable
             throw new Exception("fatal error file doesn't exist");
             return null;
         }
-        var _buffer = FileManager.ReadFile(_header->file_id);
+        var _buffer = FileManagerExtensions.ReadFile(_header->file_id);
 
         return _buffer;
     }

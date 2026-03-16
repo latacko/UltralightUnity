@@ -1,3 +1,5 @@
+using UltralightSharedClasses.Enums;
+using UltralightSharedClasses.Structs;
 using UltralightUnity;
 using UltralightUnity.Enums;
 
@@ -64,61 +66,61 @@ public static unsafe class KeysManager
 
 public static class UltralightKeyMap
 {
-    public static int ToVirtualKey(this UltralightUnity.KeyCode key)
+    public static int ToVirtualKey(this KeyCode key)
     {
         return key switch
         {
             // letters (DOM uses uppercase 65-90)
-            UltralightUnity.KeyCode.A => 65,
-            UltralightUnity.KeyCode.B => 66,
-            UltralightUnity.KeyCode.C => 67,
-            UltralightUnity.KeyCode.D => 68,
-            UltralightUnity.KeyCode.E => 69,
-            UltralightUnity.KeyCode.F => 70,
-            UltralightUnity.KeyCode.G => 71,
-            UltralightUnity.KeyCode.H => 72,
-            UltralightUnity.KeyCode.I => 73,
-            UltralightUnity.KeyCode.J => 74,
-            UltralightUnity.KeyCode.K => 75,
-            UltralightUnity.KeyCode.L => 76,
-            UltralightUnity.KeyCode.M => 77,
-            UltralightUnity.KeyCode.N => 78,
-            UltralightUnity.KeyCode.O => 79,
-            UltralightUnity.KeyCode.P => 80,
-            UltralightUnity.KeyCode.Q => 81,
-            UltralightUnity.KeyCode.R => 82,
-            UltralightUnity.KeyCode.S => 83,
-            UltralightUnity.KeyCode.T => 84,
-            UltralightUnity.KeyCode.U => 85,
-            UltralightUnity.KeyCode.V => 86,
-            UltralightUnity.KeyCode.W => 87,
-            UltralightUnity.KeyCode.X => 88,
-            UltralightUnity.KeyCode.Y => 89,
-            UltralightUnity.KeyCode.Z => 90,
+            KeyCode.A => 65,
+            KeyCode.B => 66,
+            KeyCode.C => 67,
+            KeyCode.D => 68,
+            KeyCode.E => 69,
+            KeyCode.F => 70,
+            KeyCode.G => 71,
+            KeyCode.H => 72,
+            KeyCode.I => 73,
+            KeyCode.J => 74,
+            KeyCode.K => 75,
+            KeyCode.L => 76,
+            KeyCode.M => 77,
+            KeyCode.N => 78,
+            KeyCode.O => 79,
+            KeyCode.P => 80,
+            KeyCode.Q => 81,
+            KeyCode.R => 82,
+            KeyCode.S => 83,
+            KeyCode.T => 84,
+            KeyCode.U => 85,
+            KeyCode.V => 86,
+            KeyCode.W => 87,
+            KeyCode.X => 88,
+            KeyCode.Y => 89,
+            KeyCode.Z => 90,
 
             // numbers (DOM keycodes)
-            UltralightUnity.KeyCode.Alpha0 => 48,
-            UltralightUnity.KeyCode.Alpha1 => 49,
-            UltralightUnity.KeyCode.Alpha2 => 50,
-            UltralightUnity.KeyCode.Alpha3 => 51,
-            UltralightUnity.KeyCode.Alpha4 => 52,
-            UltralightUnity.KeyCode.Alpha5 => 53,
-            UltralightUnity.KeyCode.Alpha6 => 54,
-            UltralightUnity.KeyCode.Alpha7 => 55,
-            UltralightUnity.KeyCode.Alpha8 => 56,
-            UltralightUnity.KeyCode.Alpha9 => 57,
+            KeyCode.Alpha0 => 48,
+            KeyCode.Alpha1 => 49,
+            KeyCode.Alpha2 => 50,
+            KeyCode.Alpha3 => 51,
+            KeyCode.Alpha4 => 52,
+            KeyCode.Alpha5 => 53,
+            KeyCode.Alpha6 => 54,
+            KeyCode.Alpha7 => 55,
+            KeyCode.Alpha8 => 56,
+            KeyCode.Alpha9 => 57,
 
             // specials
-            UltralightUnity.KeyCode.Return => 13,
-            UltralightUnity.KeyCode.Backspace => 8,
-            UltralightUnity.KeyCode.Tab => 9,
-            UltralightUnity.KeyCode.Escape => 27,
-            UltralightUnity.KeyCode.Space => 32,
+            KeyCode.Return => 13,
+            KeyCode.Backspace => 8,
+            KeyCode.Tab => 9,
+            KeyCode.Escape => 27,
+            KeyCode.Space => 32,
 
-            UltralightUnity.KeyCode.LeftArrow => 37,
-            UltralightUnity.KeyCode.UpArrow => 38,
-            UltralightUnity.KeyCode.RightArrow => 39,
-            UltralightUnity.KeyCode.DownArrow => 40,
+            KeyCode.LeftArrow => 37,
+            KeyCode.UpArrow => 38,
+            KeyCode.RightArrow => 39,
+            KeyCode.DownArrow => 40,
 
             _ => (int)key
         };

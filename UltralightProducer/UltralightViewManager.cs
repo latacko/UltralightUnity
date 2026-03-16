@@ -2,6 +2,10 @@ using System.Drawing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Text;
+using UltralightSharedClasses.Classes;
+using UltralightSharedClasses.Enums;
+using UltralightSharedClasses.StringHeaders;
+using UltralightSharedClasses.Structs;
 using UltralightUnity;
 
 public unsafe partial class UltralightViewManager : IDisposable
