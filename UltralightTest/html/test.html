@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>ALalaa</h1>
+    <button onclick="OnButtonClick()">Click me</button>
+    <div id="result"></div>
+    <div id="result2"></div>
+
+    <script>
+        if (window.ultralight) {
+            console.log("Ultralight set.");
+            SendMessageToCSharp();
+        } else {
+            console.log("waiting for ultralight.");
+            window.addEventListener("ultralightready", SendMessageToCSharp);
+        }
+
+        function SendMessageToCSharp() {
+            console.log("teetewtwetwetwetwe")
+            window.ultralight.postMessage("test", {
+                test: "aaa",
+                test2: "test123"
+            }, "test123");
+        }
+
+        function Result2(text) {
+            document.getElementById('result2').innerHTML = text;
+        }
+    </script>
+</body>
+
+</html>

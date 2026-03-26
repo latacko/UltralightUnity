@@ -51,16 +51,6 @@ public unsafe class UltralightManager : IDisposable
         /* OFFSETS */
         header->requestViewOffset = (uint)requestViewOffset;
         header->destroyViewOffset = (uint)destroyViewOffset;
-
-        header->RequestViewEventWrite = 0;
-        header->RequestViewEventRead = 0;
-
-        header->DestroyViewEventWrite = 0;
-        header->DestroyViewEventRead = 0;
-
-
-        header->frameCounter = 0;
-        header->requestCounter = 0;
     }
 
     public bool TestIfSleep()=>header->requestCounter <= header->frameCounter;

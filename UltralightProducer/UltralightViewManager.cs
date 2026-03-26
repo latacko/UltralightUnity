@@ -1,12 +1,12 @@
-using System.Drawing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
-using System.Text;
 using UltralightSharedClasses.Classes;
 using UltralightSharedClasses.Enums;
 using UltralightSharedClasses.StringHeaders;
 using UltralightSharedClasses.Structs;
 using UltralightUnity;
+using UltralightUnity.HandlesJs;
+using UltralightUnity.NativeJs;
 
 public unsafe partial class UltralightViewManager : IDisposable
 {
@@ -34,6 +34,7 @@ public unsafe partial class UltralightViewManager : IDisposable
     readonly int resizeOffset;
     readonly int loadEventsOffset;
     readonly int setupHTML_OR_URL_Offset;
+    readonly int executeJSOffset;
     readonly int baseEventsOffset;
 
     readonly int frameOffset;
@@ -64,6 +65,7 @@ public unsafe partial class UltralightViewManager : IDisposable
         int resizeEventsSize = sizeof(ResizeEvent) * ChunksData.RESIZE_EVENT_CHUNKS;
         int loadEventsSize = sizeof(LoadEventId) * ChunksData.LOAD_EVENT_CHUNKS;
         int setUp_HTML_OR_URL_Size = sizeof(LoadEventId) * ChunksData.SETUP_HTML_OR_URL;
+        int executeJSSize = sizeof(LoadEventIdWithCallback) * ChunksData.EXECUTE_JS_CHUNKS;
         int baseEventSize = sizeof(BaseEvent) * ChunksData.BASE_EVENT_CHUNKS;
 
         int total =
@@ -74,6 +76,7 @@ public unsafe partial class UltralightViewManager : IDisposable
             resizeEventsSize +
             loadEventsSize +
             setUp_HTML_OR_URL_Size +
+            executeJSSize +
             baseEventSize +
             bufferSize * BUFS;
 
@@ -92,7 +95,8 @@ public unsafe partial class UltralightViewManager : IDisposable
         resizeOffset = textOffset + textEventsSize;
         loadEventsOffset = resizeOffset + resizeEventsSize;
         setupHTML_OR_URL_Offset = loadEventsOffset + loadEventsSize;
-        baseEventsOffset = setupHTML_OR_URL_Offset + setUp_HTML_OR_URL_Size;
+        executeJSOffset = setupHTML_OR_URL_Offset + setUp_HTML_OR_URL_Size;
+        baseEventsOffset = executeJSOffset + executeJSSize;
         frameOffset = baseEventsOffset + baseEventSize;
 
         header->magic = MAGIC;
@@ -104,6 +108,7 @@ public unsafe partial class UltralightViewManager : IDisposable
         header->resizeOffset = (uint)resizeOffset;
         header->loadEventsOffset = (uint)loadEventsOffset;
         header->setUpHTML_OR_URL_Offset = (uint)setupHTML_OR_URL_Offset;
+        header->executeJSOffset = (uint)executeJSOffset;
         header->baseEventsOffset = (uint)baseEventsOffset;
         header->frameOffset = (uint)frameOffset;
 
@@ -111,38 +116,6 @@ public unsafe partial class UltralightViewManager : IDisposable
         header->width = WIDTH;
         header->height = HEIGHT;
         header->bufferSize = (uint)bufferSize;
-        header->writeIndex = 0;
-        header->resizeCounter = 0;
-
-
-        /* RESIZE */
-        header->resizeEventWrite = 0;
-        header->resizeEventRead = 0;
-
-
-        /* MOUSE */
-        header->buttonEventRead = 0;
-        header->buttonEventWrite = 0;
-
-        /* INPUT TEXT */
-        header->inputTextEventWrite = 0;
-        header->inputTextEventRead = 0;
-
-        /* KEY EVENT */
-        header->keyEventWrite = 0;
-        header->keyEventRead = 0;
-
-        /* Load Event */
-        header->setUpEventWrite = 0;
-        header->setUpEventRead = 0;
-
-        /* Events to unity */
-        header->loadEventsWrite = 0;
-        header->loadEventsRead = 0;
-
-        /* Events to unity */
-        header->baseEventsWrite = 0;
-        header->baseEventsRead = 0;
     }
 
     public void BeforeUpdate()
@@ -177,6 +150,8 @@ public unsafe partial class UltralightViewManager : IDisposable
             surface.ClearDirty();
         }
     }
+
+    #region Read
 
     void ReadMouseEvents()
     {
@@ -276,6 +251,40 @@ public unsafe partial class UltralightViewManager : IDisposable
         }
     }
 
+    void ReadJsExecuteEvent()
+    {
+        Thread.MemoryBarrier();
+        while (header->executeJSEventRead < header->executeJSEventWrite)
+        {
+            int index = (int)(header->executeJSEventRead % ChunksData.EXECUTE_JS_CHUNKS);
+            LoadEventIdWithCallback* ev = (LoadEventIdWithCallback*)(basePtr + executeJSOffset + index * sizeof(LoadEventIdWithCallback));
+
+            (var eventType, var headerObject, var stringList) = StringManager.ReadString(ev->id);
+
+            string _result = View.EvaluateScript(stringList[0], out string exception);
+
+            if (_result.Length > 0 && exception.Length > 0)
+                ev->idCallback = StringManager.GenerateMMF<EmptyHeader>(EventType.EvaluateScript, null, _result, exception);
+            else
+                ev->idCallback = 1;
+
+            header->executeJSEventRead++;
+        }
+    }
+
+    void ReadOpenInspector()
+    {
+        if (header->openInspector == 1)
+        {
+            header->openInspector = 0;
+            View.OpenInspector();
+            Console.WriteLine("Requested inspector");
+        }
+    }
+
+    #endregion
+
+    #region Write
     void WriteBaseEvent(BaseEventType type)
     {
         int index = (int)(header->baseEventsWrite % ChunksData.KEY_EVENT_CHUNKS);
@@ -301,15 +310,24 @@ public unsafe partial class UltralightViewManager : IDisposable
 
         header->loadEventsWrite++;
     }
+    
+    #endregion
+    
 
-    void ReadOpenInspector()
+    void Test()
     {
-        if (header->openInspector == 1)
-        {
-            header->openInspector=0;
-            View.OpenInspector();
-            Console.WriteLine("Requested inspector");
-        }
+        JSContextRef _context = View.LockJSContext();
+        var _name = JSString.CreateWithUTF8CString("OnButtonClick");
+        JSObjectRef func = JSObject.JSObjectMakeFunctionWithCallback(_context, _name, OnButtonClick);
+    }
+
+    private static JSValueRef OnButtonClick(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, nint argumentCount, JSValueRef[] arguments, out JSValueRef exception)
+    {
+        exception = JSValueRef.Null;
+        using JSString _script = JSString.CreateWithUTF8CString("document.getElementById('result').innerText = 'Ultralight rocks!'");
+        JSBase.JSEvaluateScript(ctx, _script, JSObjectRef.Null, null, 0, out var script_exception);
+
+        return NativeJSValueRef.JSValueMakeNull(ctx);
     }
 
     public void Dispose()

@@ -10,8 +10,10 @@ public static class UltralightPlatform
     {
         ULPlatform.EnablePlatformFontLoader();
 
-        ULPlatform.EnablePlatformFileSystem(AppDomain.CurrentDomain.BaseDirectory);
+        var _path = AppDomain.CurrentDomain.BaseDirectory+"../../../html/";
 
-        ULPlatform.EnableDefaultLogger(AppDomain.CurrentDomain.BaseDirectory + "data.log");
+        ULPlatform.EnablePlatformFileSystem(_path);
+        Console.WriteLine(_path);
+        ULPlatform.EnableDefaultLogger(_path+ "data.log");
     }
 }

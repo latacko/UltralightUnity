@@ -23,6 +23,11 @@ class Window : GameWindow
         this.renderer = renderer;
     }
 
+    public void OnLoadP()
+    {
+        OnLoad();
+    }
+
     protected override void OnLoad()
     {
         base.OnLoad();
@@ -148,12 +153,13 @@ class Window : GameWindow
             throw new Exception($"{name} shader compile error: {info}");
         }
     }
+    public void OnRenderFrameP(FrameEventArgs args)
+    {
+        OnRenderFrame(args);
+    }
     protected override void OnRenderFrame(FrameEventArgs args)
     {
         base.OnRenderFrame(args);
-
-        renderer.RefreshDisplay(0);
-        renderer.Render();
 
         var bitmap = view.GetSurface().GetBitmap();
         var pixels = bitmap.LockPixels();
@@ -184,6 +190,11 @@ class Window : GameWindow
         SwapBuffers();
     }
 
+    public void OnUnloadP()
+    {
+        OnLoad();
+    }
+
     protected override void OnUnload()
     {
         base.OnUnload();
@@ -194,6 +205,10 @@ class Window : GameWindow
         GL.DeleteProgram(_shader);
     }
 
+    public void OnUpdateFrameP(FrameEventArgs args)
+    {
+        OnUpdateFrame(args);
+    }
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
         base.OnUpdateFrame(args);

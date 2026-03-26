@@ -15,6 +15,7 @@ namespace UltralightSharedClasses.Structs
         public uint frameOffset;
         public uint loadEventsOffset;
         public uint setUpHTML_OR_URL_Offset;
+        public uint executeJSOffset;
         public uint baseEventsOffset;
 
         public byte openInspector;
@@ -56,5 +57,9 @@ namespace UltralightSharedClasses.Structs
         /* Load Url or html */
         public uint setUpEventWrite;
         public uint setUpEventRead;
+
+        /* Execute js */
+        public uint executeJSEventWrite;
+        public uint executeJSEventRead;
     }
 }

@@ -14,13 +14,13 @@ public unsafe partial class UltralightViewManager : IDisposable
     {
         View.OnBeginLoading += OnBeginLoading;
         View.OnFinishLoading += OnBeginLoading;
-        View.OnDOMReady += OnBeginLoading;
+        View.OnDOMReady += OnDOMReady;
         View.OnLoadFailed += OnLoadField;
         View.OnURLChanged += OnURLChanged;
         View.OnInspectorRequest += OnInspectorRequest;
     }
 
-    void OnDOMReady()
+    void OnDOMReady(ULView view)
     {
         WriteBaseEvent(BaseEventType.OnDOMReady);
     }

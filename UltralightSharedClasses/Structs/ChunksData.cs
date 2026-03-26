@@ -10,6 +10,7 @@ namespace UltralightSharedClasses.Structs
         public const int MAX_BYTES_PER_CHUNK = 50;
         public const int LOAD_EVENT_CHUNKS = 30;
         public const int SETUP_HTML_OR_URL = 3;
+        public const int EXECUTE_JS_CHUNKS = 20;
         public const int BASE_EVENT_CHUNKS = 3;
         public const int REQUEST_VIEW_EVENT_CHUNKS = 128;
         public const int DESTORY_VIEW_EVENT_CHUNKS = 128;

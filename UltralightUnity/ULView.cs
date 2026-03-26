@@ -13,7 +13,7 @@ public sealed class ULView : IDisposable
     public event Action<string>? OnURLChanged;
     public event Action? OnBeginLoading;
     public event Action? OnFinishLoading;
-    public event Action? OnDOMReady;
+    public event Action<ULView>? OnDOMReady;
     public event Action<ulong, bool, string, string, string, int>? OnLoadFailed;
     public event Action<ULMessageSource, ULMessageLevel, string, uint, uint, string> OnMessageConsole;
     public event Func<bool, string, ULView> OnInspectorRequest;
@@ -55,6 +55,11 @@ public sealed class ULView : IDisposable
         NativeView.ulViewSetFailLoadingCallback(Handle, _failCb, IntPtr.Zero);
         NativeView.ulViewSetAddConsoleMessageCallback(Handle, _messageCB, IntPtr.Zero);
         NativeView.ulViewSetCreateInspectorViewCallback(Handle, _inspectorCB, IntPtr.Zero);
+    }
+
+    internal ULView(ULViewHandle handle)
+    {
+        Handle = handle;
     }
 
     public void LoadURL(string url)
@@ -116,10 +121,20 @@ public sealed class ULView : IDisposable
         NativeView.ulViewResize(Handle, width, height);
     }
 
+    public JSContext LockJSContext()
+    {
+        return new(NativeView.ulViewLockJSContext(Handle));
+    }
+
+    public void UnlockJSContext()
+    {
+        NativeView.ulViewUnlockJSContext(Handle);
+    }
+
     public void OpenInspector()
     {
         Console.WriteLine("Sending request for inspector");
-        NativeView.ulViewCreateLocalInspectorView(Handle);
+        NativeView.ulViewCreateLocalInspectorView(Handle.DangerousGetHandle());
     }
 
     public string EvaluateScript(string js, out string exception)
@@ -172,14 +187,14 @@ public sealed class ULView : IDisposable
     private void DOMReadyEvent(IntPtr userData, IntPtr view)
     {
         Console.WriteLine("DOM ready");
-        OnDOMReady?.Invoke();
+        OnDOMReady?.Invoke(new ULView(new ULViewHandle(view)));
     }
 
     private void LoadFailedEvent(IntPtr userData, IntPtr caller, ulong frameId, bool isMainFrame, IntPtr url, IntPtr description, IntPtr errorDomain, int errorCode)
     {
         Console.WriteLine("Failed event");
-        Console.WriteLine("Url pointer "+url);
-        Console.WriteLine("Desc pointer " +description);
+        Console.WriteLine("Url pointer " + url);
+        Console.WriteLine("Desc pointer " + description);
         OnLoadFailed?.Invoke(frameId, isMainFrame, new ULString(new ULStringHandle(url, false)).ToManagedString(), new ULString(new ULStringHandle(description, false)).ToManagedString(), new ULString(new ULStringHandle(errorDomain, false)).ToManagedString(), errorCode);
     }
 
@@ -189,7 +204,7 @@ public sealed class ULView : IDisposable
         OnMessageConsole?.Invoke(source, level, new ULString(new ULStringHandle(message, false)).ToManagedString(), line_number, column_number, new ULString(new ULStringHandle(source_id, false)).ToManagedString());
     }
 
-    private ULViewHandle CreateInspectorViewEvent(IntPtr userData, ULViewHandle callerView, bool isLocal, IntPtr inspected_url)
+    private ULViewHandle CreateInspectorViewEvent(IntPtr userData, IntPtr callerView, bool isLocal, IntPtr inspected_url)
     {
         Console.WriteLine("create inspector event");
         var _ulView = OnInspectorRequest?.Invoke(isLocal, new ULString(new ULStringHandle(inspected_url, false)).ToManagedString());

@@ -10,12 +10,13 @@ namespace UltralightSharedClasses.StringHeaders
         Message,
         Set_HTML_OR_URL,
         FileExist,
-        FileOpen
+        FileOpen,
+        EvaluateScript
     }
 
     public static class GetHeaderHelper
     {
-        public static Type Get(EventType type)
+        public static Type? Get(EventType type)
         {
             switch (type)
             {
@@ -28,6 +29,8 @@ namespace UltralightSharedClasses.StringHeaders
                 case EventType.FileExist:
                     return null;
                 case EventType.FileOpen:
+                    return null;
+                case EventType.EvaluateScript:
                     return null;
                 default:
                     throw new System.Exception("Tried loading string file with unknown detailHeader type. Declared type: " + type);

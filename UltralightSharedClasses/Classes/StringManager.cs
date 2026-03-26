@@ -34,7 +34,6 @@ namespace UltralightSharedClasses.Classes
 
             int _stringHeaderSize = Marshal.SizeOf<StringHeader>();
 
-
             int _totalSize = Marshal.SizeOf<BaseInfoHeader>() + (detailHeader.HasValue ? Marshal.SizeOf<T>() : 0);
             byte[][] _buffers = new byte[strings.Length][];
             StringHeader[] headers = new StringHeader[strings.Length];
@@ -57,7 +56,7 @@ namespace UltralightSharedClasses.Classes
 
             var _mmf = CreateMMF.CreateMemoryMappedFile(_name, _totalSize);
             var _accessor = _mmf.CreateViewAccessor();
-            BaseInfoHeader _bHeader = new BaseInfoHeader()
+            BaseInfoHeader _bHeader = new()
             {
                 type = type,
                 stringsCount = (uint)strings.Length,
@@ -93,6 +92,7 @@ namespace UltralightSharedClasses.Classes
 
             _accessor.Read(0, out BaseInfoHeader header);
             Type? _detailHeader = GetHeaderHelper.Get(header.type);
+            header.ToDispose = 1;
             _accessor.Write(0, ref header);
 
             int _detailHeadersize = _detailHeader != null ? Marshal.SizeOf(_detailHeader) : 0;
@@ -132,7 +132,8 @@ namespace UltralightSharedClasses.Classes
             finally
             {
                 handle.Free();
-                DisposeString(id);
+
+                // DisposeString(id);
             }
         }
 
