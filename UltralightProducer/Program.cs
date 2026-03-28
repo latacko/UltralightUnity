@@ -27,7 +27,7 @@ class Program
         cancellationTokenDeleteLoop = new();
 
         AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-
+        Console.WriteLine("Ultralight started!");
         Manager = new UltralightManager();
         Manager.Init();
 
