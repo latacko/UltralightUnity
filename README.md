@@ -20,7 +20,7 @@ Currently, it is working on `Linux` & `Windows`
 
 ### Installation
 
-1. Download `unitySample.unitypackage` from [Releases](#)
+1. Download `unitySample.unitypackage` from [Releases](https://github.com/latacko/UltralightUnity/releases)
 2. Import it into your project
 3. Read the `README.md` inside the sample
 4. Open the example scene at: `Latacko/Ultralight/Example/Example_Scenes/UltralightSample`
