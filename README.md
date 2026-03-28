@@ -7,6 +7,14 @@ Currently, it is working on `Linux` & `Windows`
 ## Getting started
 
 Requires: `Unity Addressables`
+- If you didn't have addressables before, you need to configure it.
+- Window -> Asset Management -> Addressables -> Groups
+- Create Addressables Settings
+
+Requires: `Unity Old Input System`
+- Project settings -> Player -> Other Settings -> Configuration -> Active Input Handling
+- Set `Active Input Handling` to `Both` or `Old` depending or your needs.
+- If you don't want old input system, edit `ULInputSender` and `ExampleSiteController`. (Maybe I will add support for the new system. But feel free to upload yours.)
 
 Download `unitySample.unitypackage` from Releases  
 Import it into your project  
