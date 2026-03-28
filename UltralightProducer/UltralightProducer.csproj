@@ -10,8 +10,7 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
 
-    <None Include="resources/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
-    <None Include="license/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Include="license/NOTICES.md" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <PropertyGroup>

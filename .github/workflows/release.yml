@@ -19,7 +19,7 @@ jobs:
 
       - name: Pull LFS files  # ← extra safety, sometimes needed
         run: git lfs pull
-        
+
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
@@ -43,7 +43,7 @@ jobs:
       - name: Archive Linux
         run: |
           cd publish-linux
-          tar -czvf UltralightProducer-linux-x64.tar.gz UltralightProducer runtimes
+          tar -czvf UltralightProducer-linux-x64.tar.gz .
           mv UltralightProducer-linux-x64.tar.gz ../
 
       - name: Upload Linux Artifact
@@ -85,7 +85,7 @@ jobs:
       - name: Archive Windows
         run: |
           cd publish-windows
-          tar -a -c -f ../UltralightProducer-win-x64.zip UltralightProducer.exe runtimes
+          tar -a -c -f ../UltralightProducer-win-x64.zip .
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
