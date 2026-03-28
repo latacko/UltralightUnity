@@ -4,9 +4,13 @@
     <ProjectReference Include="..\UltralightUnity\UltralightUnity.csproj" />
     <ProjectReference Include="..\UltralightSharedClasses\UltralightSharedClasses.csproj" />
 
-    <None Include="runtimes/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Include="runtimes/**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+
     <None Include="resources/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
-    <None Include="inspector/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <None Include="license/**" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
   </ItemGroup>
 

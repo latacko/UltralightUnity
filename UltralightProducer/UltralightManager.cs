@@ -129,7 +129,7 @@ public unsafe class UltralightManager : IDisposable
     public void Dispose()
     {
 
-        Console.WriteLine("cleaning up...");
+        Console.WriteLine("cleaning up manager...");
 
         foreach (var view in Views)
         {

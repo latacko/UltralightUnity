@@ -12,7 +12,9 @@ public sealed class ULRenderer : IDisposable
         Handle = NativeRenderer.ulCreateRenderer(config.Handle.DangerousGetHandle());
 
         if (Handle.IsInvalid)
+        {
             throw new InvalidOperationException("ulCreateRenderer failed.");
+        }
     }
 
     public void Update() => NativeRenderer.ulUpdate(Handle);
@@ -41,7 +43,8 @@ public sealed class ULRenderer : IDisposable
         return new ULView(this, width, height, config, session);
     }
 
-    public void Dispose(){
+    public void Dispose()
+    {
         Handle.Dispose();
     }
 }

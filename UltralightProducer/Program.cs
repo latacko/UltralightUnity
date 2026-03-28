@@ -8,6 +8,7 @@ class Program
     // public static ULFileSystem unityFs { get; private set; }
     public static UnityFileSystem unityFs { get; private set; }
     public static CancellationTokenSource cancellationTokenDeleteLoop;
+    static bool disposing = false;
     static void Main(string[] args)
     {
         if (args.Length > 0)
@@ -44,6 +45,7 @@ class Program
 
         Task task = Task.Run((Action) DeleteLoop);
 
+        // var _view = new UltralightViewManager(12, 1920, 1080, true);
 
         while (Manager.TestIfRun())
         {
@@ -77,6 +79,9 @@ class Program
 
     private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
     {
+        if(disposing) return;
+        disposing = true;
+        
         StringManager.DeleteAll();
         cancellationTokenDeleteLoop.Cancel();
         Console.WriteLine("Invalid magic. Closing...");

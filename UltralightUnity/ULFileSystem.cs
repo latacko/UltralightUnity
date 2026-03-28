@@ -59,13 +59,16 @@ public class ULFileSystem
     {
         string _path = new ULString(new ULStringHandle(pathPtr, false)).ToManagedString();
         var _mime = new ULString(GetMimeType(_path));
+        _mime.Handle.SetHandleAsInvalid();
         return _mime.Handle.DangerousGetHandle();
     }
 
     private IntPtr GetCharacterEvent(IntPtr pathPtr)
     {
+        Console.WriteLine("Getin charset");
         string _path = new ULString(new ULStringHandle(pathPtr, false)).ToManagedString();
         var _charset = new ULString(GetCharacter(_path));
+        _charset.Handle.SetHandleAsInvalid();
         return _charset.Handle.DangerousGetHandle();
     }
 
@@ -83,7 +86,9 @@ public class ULFileSystem
 
     public virtual string GetMimeType(string path)
     {
-        return MimeTypes.Get(Path.GetExtension(baseDir + path)[1..]);
+        string _extension = MimeTypes.Get(Path.GetExtension(baseDir + path)[1..]);
+        Console.WriteLine("mime for " + path + " = " + _extension);
+        return _extension;
     }
 
     public virtual string GetCharacter(string path)

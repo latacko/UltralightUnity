@@ -9,27 +9,19 @@ namespace UltralightSharedClasses.Classes
         public const string LINUX_PATH = "/dev/shm/";
         public static MemoryMappedFile CreateMemoryMappedFile(string name, int totalSize)
         {
-            #if UNITY_STANDALONE_WIN
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 return MemoryMappedFile.CreateNew(name, totalSize);
-            #elif UNITY_STANDALONE_LINUX
-            #else
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                    return MemoryMappedFile.CreateNew(name, totalSize);
-            #endif
-            using var _fs = new FileStream(LINUX_PATH + name, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+
+            using var _fs = new FileStream(LINUX_PATH + name, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
             _fs.SetLength(totalSize);
             return MemoryMappedFile.CreateFromFile(_fs, null, totalSize, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
         }
 
         public static MemoryMappedFile OpenMemoryMappedFile(string name)
         {
-            #if UNITY_STANDALONE_WIN
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 return MemoryMappedFile.OpenExisting(name);
-            #elif UNITY_STANDALONE_LINUX
-            #else
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                    return MemoryMappedFile.OpenExisting(name);
-            #endif
 
             using var _fs = new FileStream(LINUX_PATH + name, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
 

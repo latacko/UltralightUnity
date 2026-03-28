@@ -11,7 +11,10 @@ namespace UltralightSharedClasses.StringHeaders
         Set_HTML_OR_URL,
         FileExist,
         FileOpen,
-        EvaluateScript
+        EvaluateScript,
+        MessageConsole,
+        MessageEmitted,
+        PostMessage
     }
 
     public static class GetHeaderHelper
@@ -31,6 +34,12 @@ namespace UltralightSharedClasses.StringHeaders
                 case EventType.FileOpen:
                     return null;
                 case EventType.EvaluateScript:
+                    return null;
+                case EventType.MessageConsole:
+                    return typeof(MessageConsoleHeader);
+                case EventType.MessageEmitted:
+                    return null;
+                case EventType.PostMessage:
                     return null;
                 default:
                     throw new System.Exception("Tried loading string file with unknown detailHeader type. Declared type: " + type);

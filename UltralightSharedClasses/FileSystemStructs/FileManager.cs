@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using UltralightSharedClasses.Classes;
@@ -6,20 +8,10 @@ using UltralightSharedClasses.Structs;
 
 namespace UltralightSharedClasses.FileSystemStructs
 {
-    public struct FilesHolder
-    {
-        public readonly MemoryMappedFile Mmf;
-        public readonly MemoryMappedViewAccessor Accessor;
-
-        public FilesHolder(MemoryMappedFile mmf, MemoryMappedViewAccessor accessor)
-        {
-            Mmf = mmf;
-            Accessor = accessor;
-        }
-    }
 
     public static class FileManager
     {
+        readonly static Dictionary<uint, FileHolder> generatedFiles = new();
         public static uint GenerateMMF(byte[] fileData)
         {
             uint _id = (uint)Guid.NewGuid().GetHashCode();
@@ -41,8 +33,53 @@ namespace UltralightSharedClasses.FileSystemStructs
             };
             _accessor.Write(0, ref _bHeader);
             _accessor.WriteArray(_fileHeaderSize, fileData, 0, fileData.Length);
+            generatedFiles.Add(_id, new(_mmf, _accessor));
 
             return _id;
+        }
+
+        static readonly List<uint> toDelete = new();
+        public static void TestIfDelete()
+        {
+            toDelete.Clear();
+            foreach (var item in generatedFiles)
+            {
+                item.Value.Accessor.Read(0, out FileHeader header);
+                if (header.ToDispose == 0) continue;
+
+                toDelete.Add(item.Key);
+            }
+
+            foreach (var id in toDelete)
+            {
+                DisposeFile(id);
+            }
+        }
+
+        public static void DeleteAll()
+        {
+            toDelete.Clear();
+            foreach (var item in generatedFiles)
+            {
+                toDelete.Add(item.Key);
+            }
+
+            foreach (var id in toDelete)
+            {
+                DisposeFile(id);
+            }
+        }
+
+        private static void DisposeFile(uint id)
+        {
+            generatedFiles[id].Accessor.Dispose();
+            generatedFiles[id].Mmf.Dispose();
+            generatedFiles.Remove(id);
+
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                File.Delete(CreateMMF.LINUX_PATH + BASE_FILE_NAME.FILE + id.ToString());
+            }
         }
     }
 }

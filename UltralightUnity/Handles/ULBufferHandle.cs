@@ -10,7 +10,9 @@ internal sealed class ULBufferHandle : SafeHandleZeroOrMinusOneIsInvalid
 
     protected override bool ReleaseHandle()
     {
+        Console.WriteLine("buffer_test1");
         NativeBuffer.ulDestroyBuffer(handle);
+        Console.WriteLine("buffer_test2");
         return true;
     }
 }

@@ -46,6 +46,11 @@ namespace UltralightUnity
             return NativeJSValueRef.JSValueIsNull(contextRef, valueRef);
         }
 
+        public bool IsBoolean()
+        {
+            return NativeJSValueRef.JSValueIsBoolean(contextRef, valueRef);
+        }
+
         public new string ToString()
         {
             return new JSString(valueRef.DangerousGetHandle(), contextRef).ToString();
@@ -64,6 +69,11 @@ namespace UltralightUnity
             exception = new(exceptionRef, contextRef);
             JSObject _object = new(_objectRef, contextRef);
             return _object;
+        }
+
+        public bool ToBoolean()
+        {
+            return NativeJSValueRef.JSValueToBoolean(contextRef, valueRef);
         }
     }
 }

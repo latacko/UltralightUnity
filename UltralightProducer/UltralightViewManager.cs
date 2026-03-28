@@ -28,16 +28,31 @@ public unsafe partial class UltralightViewManager : IDisposable
     readonly byte* basePtr;
     readonly int headerSize;
     readonly int mouseOffset;
-    readonly int keyOffset;
-    readonly int textOffset;
+    [OffsetAfter(nameof(mouseEventsSize))] readonly int keyOffset;
+    [OffsetAfter(nameof(keyEventsSize))] readonly int textOffset;
+    [OffsetAfter(nameof(textEventsSize))] readonly int resizeOffset;
+    [OffsetAfter(nameof(resizeEventsSize))] readonly int loadEventsOffset;
+    [OffsetAfter(nameof(loadEventsSize))] readonly int setupHTML_OR_URL_Offset;
+    [OffsetAfter(nameof(setUp_HTML_OR_URL_Size))] readonly int executeJSOffset;
+    [OffsetAfter(nameof(executeJSSize))] readonly int messageConsoleOffset;
+    [OffsetAfter(nameof(messageConsoleSize))] readonly int messageEmittedOffset;
+    [OffsetAfter(nameof(messageEmittedSize))] readonly int postMessageOffset;
+    [OffsetAfter(nameof(postMessageSize))] readonly int baseEventsOffset;
+    [OffsetAfter(nameof(baseEventSize))] readonly int frameOffset;
+    #endregion
 
-    readonly int resizeOffset;
-    readonly int loadEventsOffset;
-    readonly int setupHTML_OR_URL_Offset;
-    readonly int executeJSOffset;
-    readonly int baseEventsOffset;
-
-    readonly int frameOffset;
+    #region SIZES
+    [FieldSize] readonly int mouseEventsSize;
+    [FieldSize] readonly int keyEventsSize;
+    [FieldSize] readonly int textEventsSize;
+    [FieldSize] readonly int resizeEventsSize;
+    [FieldSize] readonly int loadEventsSize;
+    [FieldSize] readonly int setUp_HTML_OR_URL_Size;
+    [FieldSize] readonly int executeJSSize;
+    [FieldSize] readonly int messageConsoleSize;
+    [FieldSize] readonly int messageEmittedSize;
+    [FieldSize] readonly int postMessageSize;
+    [FieldSize] readonly int baseEventSize;
     #endregion
 
     public readonly ULView View;
@@ -59,26 +74,24 @@ public unsafe partial class UltralightViewManager : IDisposable
         this.PATH = BASE_FILE_NAME.BASE_PATH + BASE_FILE_NAME.VIEW + id.ToString();
 
         bufferSize = (int)WIDTH * (int)HEIGHT * 4;
-        int mouseEventsSize = sizeof(MouseEvent) * ChunksData.MOUSE_EVENT_CHUNKS;
-        int keyEventsSize = sizeof(KeyEvent) * ChunksData.KEY_EVENT_CHUNKS;
-        int textEventsSize = sizeof(InputTextEvent) * ChunksData.TEXT_EVENT_CHUNKS;
-        int resizeEventsSize = sizeof(ResizeEvent) * ChunksData.RESIZE_EVENT_CHUNKS;
-        int loadEventsSize = sizeof(LoadEventId) * ChunksData.LOAD_EVENT_CHUNKS;
-        int setUp_HTML_OR_URL_Size = sizeof(LoadEventId) * ChunksData.SETUP_HTML_OR_URL;
-        int executeJSSize = sizeof(LoadEventIdWithCallback) * ChunksData.EXECUTE_JS_CHUNKS;
-        int baseEventSize = sizeof(BaseEvent) * ChunksData.BASE_EVENT_CHUNKS;
+        mouseEventsSize = sizeof(MouseEvent) * ChunksData.MOUSE_EVENT_CHUNKS;
+        keyEventsSize = sizeof(KeyEvent) * ChunksData.KEY_EVENT_CHUNKS;
+        textEventsSize = sizeof(InputTextEvent) * ChunksData.TEXT_EVENT_CHUNKS;
+        resizeEventsSize = sizeof(ResizeEvent) * ChunksData.RESIZE_EVENT_CHUNKS;
+        loadEventsSize = sizeof(LoadEventId) * ChunksData.LOAD_EVENT_CHUNKS;
+        setUp_HTML_OR_URL_Size = sizeof(LoadEventId) * ChunksData.SETUP_HTML_OR_URL;
+        executeJSSize = sizeof(LoadEventIdWithCallback) * ChunksData.EXECUTE_JS_CHUNKS;
+        messageConsoleSize = sizeof(LoadEventId) * ChunksData.MESSAGE_CONSOLE_CHUNKS;
+        messageEmittedSize = sizeof(LoadEventId) * ChunksData.MESSAGE_EMITTED_CHUNKS;
+        postMessageSize = sizeof(LoadEventId) * ChunksData.POST_MESSAGE_CHUNKS;
+        baseEventSize = sizeof(BaseEvent) * ChunksData.BASE_EVENT_CHUNKS;
+
 
         int total =
             Marshal.SizeOf<ViewHeader>() +
-            mouseEventsSize +
-            keyEventsSize +
-            textEventsSize +
-            resizeEventsSize +
-            loadEventsSize +
-            setUp_HTML_OR_URL_Size +
-            executeJSSize +
-            baseEventSize +
+            ComputeFildSizes() +
             bufferSize * BUFS;
+
 
         mmf = CreateMMF.CreateMemoryMappedFile(BASE_FILE_NAME.VIEW + id.ToString(), total);
 
@@ -89,28 +102,21 @@ public unsafe partial class UltralightViewManager : IDisposable
         header = (ViewHeader*)ptr;
         headerSize = Marshal.SizeOf<ViewHeader>();
 
-        mouseOffset = headerSize;
-        keyOffset = mouseOffset + mouseEventsSize;
-        textOffset = keyOffset + keyEventsSize;
-        resizeOffset = textOffset + textEventsSize;
-        loadEventsOffset = resizeOffset + resizeEventsSize;
-        setupHTML_OR_URL_Offset = loadEventsOffset + loadEventsSize;
-        executeJSOffset = setupHTML_OR_URL_Offset + setUp_HTML_OR_URL_Size;
-        baseEventsOffset = executeJSOffset + executeJSSize;
-        frameOffset = baseEventsOffset + baseEventSize;
+        // mouseOffset = headerSize;
+        // keyOffset = mouseOffset + mouseEventsSize;
+        // textOffset = keyOffset + keyEventsSize;
+        // resizeOffset = textOffset + textEventsSize;
+        // loadEventsOffset = resizeOffset + resizeEventsSize;
+        // setupHTML_OR_URL_Offset = loadEventsOffset + loadEventsSize;
+        // executeJSOffset = setupHTML_OR_URL_Offset + setUp_HTML_OR_URL_Size;
+        // messageConsoleOffset = executeJSOffset + executeJSSize;
+        // messageEmittedOffset = messageConsoleOffset + messageConsoleSize;
+        // baseEventsOffset = messageEmittedOffset + messageEmittedSize;
+        // frameOffset = baseEventsOffset + baseEventSize;
+
+        ComputeOffsets();
 
         header->magic = MAGIC;
-
-        /* OFFSETS */
-        header->mouseOffset = (uint)mouseOffset;
-        header->keyOffset = (uint)keyOffset;
-        header->textOffset = (uint)textOffset;
-        header->resizeOffset = (uint)resizeOffset;
-        header->loadEventsOffset = (uint)loadEventsOffset;
-        header->setUpHTML_OR_URL_Offset = (uint)setupHTML_OR_URL_Offset;
-        header->executeJSOffset = (uint)executeJSOffset;
-        header->baseEventsOffset = (uint)baseEventsOffset;
-        header->frameOffset = (uint)frameOffset;
 
         /* FRAMES */
         header->width = WIDTH;
@@ -129,7 +135,13 @@ public unsafe partial class UltralightViewManager : IDisposable
         ReadResizeEvent();
 
         ReadSetUpEvents();
+
+        ReadJsExecuteEvent();
+
+        ReadPostMessageEvent();
+
         ReadOpenInspector();
+        
     }
 
     public void Update()
@@ -272,6 +284,20 @@ public unsafe partial class UltralightViewManager : IDisposable
         }
     }
 
+    void ReadPostMessageEvent()
+    {
+        while (header->postMessageEventRead < header->postMessageEventWrite)
+        {
+            int index = (int)(header->postMessageEventRead % ChunksData.POST_MESSAGE_CHUNKS);
+            LoadEventId* ev = (LoadEventId*)(basePtr + postMessageOffset + index * sizeof(LoadEventId));
+
+            (var eventType, var headerObject, var stringList) = StringManager.ReadString(ev->id);
+            View.PostMessage(stringList[0]);
+
+            header->postMessageEventRead++;
+        }
+    }
+
     void ReadOpenInspector()
     {
         if (header->openInspector == 1)
@@ -310,30 +336,38 @@ public unsafe partial class UltralightViewManager : IDisposable
 
         header->loadEventsWrite++;
     }
-    
+
+    void WriteMessageConsole(uint id)
+    {
+        int index = (int)(header->messageConsoleEventWrite % ChunksData.MESSAGE_CONSOLE_CHUNKS);
+
+        LoadEventId* ev = (LoadEventId*)(basePtr + messageConsoleOffset + index * sizeof(LoadEventId));
+
+        ev->id = id;
+
+        Thread.MemoryBarrier();
+
+        header->messageConsoleEventWrite++;
+    }
+
+    void WriteMessageEmitted(uint id)
+    {
+        int index = (int)(header->messageEmittedEventWrite % ChunksData.MESSAGE_CONSOLE_CHUNKS);
+
+        LoadEventId* ev = (LoadEventId*)(basePtr + messageEmittedOffset + index * sizeof(LoadEventId));
+        Console.WriteLine("Message emitted: " + id);
+        ev->id = id;
+
+        Thread.MemoryBarrier();
+
+        header->messageEmittedEventWrite++;
+    }
+
     #endregion
-    
-
-    void Test()
-    {
-        JSContextRef _context = View.LockJSContext();
-        var _name = JSString.CreateWithUTF8CString("OnButtonClick");
-        JSObjectRef func = JSObject.JSObjectMakeFunctionWithCallback(_context, _name, OnButtonClick);
-    }
-
-    private static JSValueRef OnButtonClick(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, nint argumentCount, JSValueRef[] arguments, out JSValueRef exception)
-    {
-        exception = JSValueRef.Null;
-        using JSString _script = JSString.CreateWithUTF8CString("document.getElementById('result').innerText = 'Ultralight rocks!'");
-        JSBase.JSEvaluateScript(ctx, _script, JSObjectRef.Null, null, 0, out var script_exception);
-
-        return NativeJSValueRef.JSValueMakeNull(ctx);
-    }
 
     public void Dispose()
     {
-
-        Console.WriteLine("cleaning up...");
+        Console.WriteLine("cleaning up view... " + ID);
 
         if (inspectorView != null)
         {

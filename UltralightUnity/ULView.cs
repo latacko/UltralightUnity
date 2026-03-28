@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
 using System.Xml.XPath;
 using UltralightUnity.Handles;
+using UltralightUnity.HandlesJs;
 using UltralightUnity.Native;
 
 namespace UltralightUnity;
@@ -16,6 +18,9 @@ public sealed class ULView : IDisposable
     public event Action<ULView>? OnDOMReady;
     public event Action<ulong, bool, string, string, string, int>? OnLoadFailed;
     public event Action<ULMessageSource, ULMessageLevel, string, uint, uint, string> OnMessageConsole;
+
+    public delegate void MessageEmittedEvent(string sender, string json);
+    public event MessageEmittedEvent MessageEmitted;
     public event Func<bool, string, ULView> OnInspectorRequest;
 
     private NativeView.ChangeTitleCallback? _titleCb;
@@ -26,6 +31,8 @@ public sealed class ULView : IDisposable
     private NativeView.FailLoadingCallback? _failCb;
     private NativeView.AddConsoleMessageCallback? _messageCB;
     private NativeView.ULCreateInspectorViewCallback? _inspectorCB;
+
+    private JSObject.JSObjectCallAsFunctionCallback? _receivedPostMessageFunction;
 
     internal ULViewHandle Handle { get; }
 
@@ -55,6 +62,9 @@ public sealed class ULView : IDisposable
         NativeView.ulViewSetFailLoadingCallback(Handle, _failCb, IntPtr.Zero);
         NativeView.ulViewSetAddConsoleMessageCallback(Handle, _messageCB, IntPtr.Zero);
         NativeView.ulViewSetCreateInspectorViewCallback(Handle, _inspectorCB, IntPtr.Zero);
+
+        _receivedPostMessageFunction = ReceivedPostMessage;
+        OnDOMReady += AttachUltralightObject;
     }
 
     internal ULView(ULViewHandle handle)
@@ -64,7 +74,7 @@ public sealed class ULView : IDisposable
 
     public void LoadURL(string url)
     {
-        var s = new ULString(url);
+        using var s = new ULString(url);
         NativeView.ulViewLoadURL(Handle, s.Handle);
     }
 
@@ -158,6 +168,53 @@ public sealed class ULView : IDisposable
         return _result;
     }
 
+    public void AttachUltralightObject(ULView view)
+    {
+        JSContext _context = view.LockJSContext();
+        JSGlobalContext _globalContext = _context.GetGlobalContext();
+
+        var _bridgeObject = _context.ObjectMake(JSClassRef.Empty, IntPtr.Zero);
+        JSObject _postMassageFunction = _context.MakeFunctionWithCallback("postMessage", _receivedPostMessageFunction!);
+        _bridgeObject.SetProperty("postMessage", _postMassageFunction, 0, out _);
+
+        _globalContext.SetProperty("ultralight", _bridgeObject, 0, out _);
+
+        _context.EvaluateScript("window.dispatchEvent(new Event('ultralightready'));", null, null, 0, out _);
+
+        view.UnlockJSContext();
+    }
+
+    private JSValue ReceivedPostMessage(JSContext ctx, JSObject function, JSObject thisObject, nint argumentCount, JSValue[] arguments, out JSValue? exception)
+    {
+        exception = null;
+        Dictionary<string, object> _data = [];
+        
+        JSObject _obj = arguments[1].ToObject(out _);
+        var _keys = _obj.GetPropertyNames();
+
+        foreach (var key in _keys)
+        {
+            var _object = _obj.GetProperty(key, out _);
+            if (_object.IsNumber())
+                _data[key] = _object.ToNumber(out _);
+            else if (_object.IsString())
+                _data[key] = _object.ToString();
+            else if (_object.IsBoolean())
+                _data[key] = _object.ToBoolean();
+            else
+                Console.WriteLine("Unsuported data type for property: " + key);
+        }
+        string _json = Newtonsoft.Json.JsonConvert.SerializeObject(_data);
+        MessageEmitted?.Invoke(arguments[0].ToString(), _json);
+        return ctx.MakeNull();
+    }
+
+    public void PostMessage(string json)
+    {
+        JSContext _context = LockJSContext();
+        _context.EvaluateScript($"window.dispatchEvent(new MessageEvent('ultralightmessage', {{ data: {json} }}));", null, null, 0, out _);
+        UnlockJSContext();
+    }
 
     #region Events manager
     private void TitleChangedEvent(IntPtr userData, IntPtr view, IntPtr title)

@@ -48,7 +48,6 @@ public sealed class ULString : IDisposable
 
     public void Dispose()
     {
-        Console.WriteLine("destroying string " + ToString());
         Handle.Dispose();
     }
 }

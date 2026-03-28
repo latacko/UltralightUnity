@@ -78,8 +78,9 @@ public unsafe class UnityFileSystem : ULFileSystem, IDisposable
     {
         var _header = WriteExistEvent(path);
         int _attempts = 0;
-        while (_header->set == 0 && _attempts < 3000)
+        while (_header->set == 0 && _attempts < 30000)
         {
+            _attempts++;
             Thread.Sleep(1);
         }
 
@@ -91,7 +92,7 @@ public unsafe class UnityFileSystem : ULFileSystem, IDisposable
         Console.WriteLine("opening file " + path);
         var _header = WriteOpenFileEvent(path);
         int _attempts = 0;
-        while (_header->file_id == 0 && _attempts < 3000)
+        while (_header->file_id == 0 && _attempts < 30000)
         {
             _attempts++;
             Thread.Sleep(1);
@@ -102,13 +103,14 @@ public unsafe class UnityFileSystem : ULFileSystem, IDisposable
             return null;
         }
         var _buffer = FileManagerExtensions.ReadFile(_header->file_id);
+        Console.WriteLine("opening file 2 " + path);
 
         return _buffer;
     }
 
     public void Dispose()
     {
-        Console.WriteLine("cleaning up...");
+        Console.WriteLine("cleaning up fs...");
 
         try
         {

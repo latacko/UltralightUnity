@@ -10,21 +10,10 @@ using UltralightSharedClasses.Structs;
 
 namespace UltralightSharedClasses.Classes
 {
-    public struct StringHolder
-    {
-        public readonly MemoryMappedFile Mmf;
-        public readonly MemoryMappedViewAccessor Accessor;
-
-        public StringHolder(MemoryMappedFile mmf, MemoryMappedViewAccessor accessor)
-        {
-            Mmf = mmf;
-            Accessor = accessor;
-        }
-    }
 
     public static class StringManager
     {
-        static Dictionary<uint, StringHolder> generatedStrings = new();
+        static Dictionary<uint, FileHolder> generatedStrings = new();
 
         public static uint GenerateMMF<T>(EventType type, T? detailHeader, params string[] strings) where T : unmanaged
         {
@@ -78,7 +67,7 @@ namespace UltralightSharedClasses.Classes
             }
 
 
-            generatedStrings.Add(_id, new StringHolder(_mmf, _accessor));
+            generatedStrings.Add(_id, new FileHolder(_mmf, _accessor));
 
             return _id;
         }
@@ -175,13 +164,8 @@ namespace UltralightSharedClasses.Classes
             generatedStrings[id].Mmf.Dispose();
             generatedStrings.Remove(id);
 
-#if UNITY_STANDALONE_WIN
-#elif UNITY_STANDALONE_LINUX
-                File.Delete(CreateMMF.LINUX_PATH + BASE_FILE_NAME.STRING + id.ToString());
-#else
             if (Environment.OSVersion.Platform == PlatformID.Unix)
                 File.Delete(CreateMMF.LINUX_PATH + BASE_FILE_NAME.STRING + id.ToString());
-#endif
         }
     }
 }

@@ -22,12 +22,20 @@
             window.addEventListener("ultralightready", SendMessageToCSharp);
         }
 
+        window.addEventListener("ultralightmessage", (event)=>{
+            const json = event.data
+            console.log("Json received " + json.test);
+        })
+
         function SendMessageToCSharp() {
             console.log("teetewtwetwetwetwe")
             window.ultralight.postMessage("test", {
                 test: "aaa",
-                test2: "test123"
-            }, "test123");
+                test2: "test123",
+                test3: 123,
+                test4: true,
+                test5: false,
+            });
         }
 
         function Result2(text) {
