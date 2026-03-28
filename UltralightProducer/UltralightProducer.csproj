@@ -11,6 +11,11 @@
     </None>
 
     <None Include="license/NOTICES.md" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Include="../LICENSE">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>license/LICENSE</Link>
+    </None>
   </ItemGroup>
 
   <PropertyGroup>
