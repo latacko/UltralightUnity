@@ -82,6 +82,11 @@ jobs:
           cd publish-windows
           powershell Compress-Archive -Path UltralightProducer.exe, runtimes -DestinationPath ../UltralightProducer-win-x64.zip
 
+      - name: Archive
+        uses: montudor/action-zip@v1
+        with:
+          args: cd publish-windows && zip -qq -r ../UltralightProducer-win-x64.zip UltralightProducer.exe runtimes
+
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
