@@ -188,22 +188,25 @@ public sealed class ULView : IDisposable
     {
         exception = null;
         Dictionary<string, object> _data = [];
-        
-        JSObject _obj = arguments[1].ToObject(out _);
-        var _keys = _obj.GetPropertyNames();
-
-        foreach (var key in _keys)
+        if (arguments.Length > 1 && arguments[1].IsObject())
         {
-            var _object = _obj.GetProperty(key, out _);
-            if (_object.IsNumber())
-                _data[key] = _object.ToNumber(out _);
-            else if (_object.IsString())
-                _data[key] = _object.ToString();
-            else if (_object.IsBoolean())
-                _data[key] = _object.ToBoolean();
-            else
-                Console.WriteLine("Unsuported data type for property: " + key);
+            JSObject _obj = arguments[1].ToObject(out _);
+            var _keys = _obj.GetPropertyNames();
+
+            foreach (var key in _keys)
+            {
+                var _object = _obj.GetProperty(key, out _);
+                if (_object.IsNumber())
+                    _data[key] = _object.ToNumber(out _);
+                else if (_object.IsString())
+                    _data[key] = _object.ToString();
+                else if (_object.IsBoolean())
+                    _data[key] = _object.ToBoolean();
+                else
+                    Console.WriteLine("Unsuported data type for property: " + key);
+            }
         }
+
         string _json = Newtonsoft.Json.JsonConvert.SerializeObject(_data);
         MessageEmitted?.Invoke(arguments[0].ToString(), _json);
         return ctx.MakeNull();
