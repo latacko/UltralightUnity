@@ -14,7 +14,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true          # ← tell checkout to fetch LFS files
 
+      - name: Pull LFS files  # ← extra safety, sometimes needed
+        run: git lfs pull
+        
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
